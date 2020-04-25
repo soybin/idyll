@@ -1,4 +1,5 @@
 #include "region.h"
+#include "seed.h"
 
 region::region(int WIDTH, int HEIGHT) 
 	: WIDTH(WIDTH), HEIGHT(HEIGHT) {
@@ -7,6 +8,13 @@ region::region(int WIDTH, int HEIGHT)
 	RENDER_THRESHOLD = 0.01f;
 	ori = math::vec3();
 	col = math::vec3();
+	s = seed::get({
+			{'A', 'E'},
+			{'F', 'Z'},
+			{'A', 'a'},
+			{'M', 'O'},
+			{'A', 'F'}
+	});
 }
 
 region::~region() {
@@ -18,6 +26,10 @@ void region::setXCoord(float xcoord) {
 
 void region::setYCoord(float ycoord) {
 	this->ycoord = ycoord;
+}
+
+const char* region::getSeed() {
+	return &s[0];
 }
 
 math::vec3 region::render() {
@@ -36,3 +48,4 @@ math::vec3 region::render() {
 	}
 	return math::vec3(255.0f * (1.0 - float(step) / float(MAX_STEP)));
 }
+
