@@ -6,7 +6,10 @@ namespace config {
 		std::ifstream file("config.txt");
 
 		// create file in case it doesn't exist
-		if (!file.good()) config::reset();
+		if (!file.good()) {
+			config::reset();
+			file = std::ifstream("config.txt");
+		}
 
 		for (std::string line; std::getline(file, line); ) {
 			size_t found = line.find(name);
