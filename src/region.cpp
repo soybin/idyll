@@ -2,7 +2,7 @@
 #include "seed.h"
 
 #define RENDER_THRESHOLD 0.001f
-#define MAX_STEP 100
+#define MAX_STEP 40
 
 region::region(int WIDTH, int HEIGHT, fractal* f) 
 	: WIDTH(WIDTH), HEIGHT(HEIGHT), f(f) {

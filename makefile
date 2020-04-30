@@ -5,7 +5,7 @@ LCFLAGS = -lncurses
 idyll: src/main.cpp src/config.cpp src/gui.cpp src/math.cpp src/region.cpp src/fractal.cpp src/seed.cpp
 	$(CC) $(CCFLAGS) src/main.cpp src/config.cpp src/gui.cpp src/math.cpp src/region.cpp src/fractal.cpp src/seed.cpp $(LCFLAGS)
 	./idyll
-	feh
+	feh out.ppm
 
 clean:
 	rm idyll

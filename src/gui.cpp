@@ -95,7 +95,7 @@ namespace gui {
 		return true;
 	}
 	
-	void update(float* curV, float tarV) {
+	void update(int* curV, int tarV) {
 		for (; *curV < tarV; ){
 			// width of logo is 34 characters. two of which
 			// will be used for the extremes of the bar.
