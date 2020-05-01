@@ -6,15 +6,15 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
+#include <chrono>
 
-void renderThread(int startRow, int endRow, int startCol, int endCol, int width, int height, int chunk, fractal* f, std::vector<std::vector<math::vec3>>* image) {
-	region reg(width, height, f);
-
+// this function wil be instantiated in multiple threads at runtime. it iterates
+// through a specified range in a 2d matrix and renders every pixel in the range.
+// then it stores the pixel value at the "image" 2d matrix
+void renderRange(int startRow, int endRow, int startCol, int endCol, int width, int height, int chunk, region* reg, fractal* f, std::vector<std::vector<math::vec3>>* image) {
 	for (int y = startRow, x = startCol; y < height && (y < endRow || chunk > 0); ++y) {
-		reg.setYCoord((float)height - ((float)y + 0.5f));
 		for (; x < width && (x < endCol || chunk > 0); ++x) {
-			reg.setXCoord((float)x + 0.5f);
-			(*image)[y][x] = reg.render();
+			(*image)[y][x] = reg->render((float)height - ((float)y + 0.5f), (float)x + 0.5f);
 			--chunk;
 		}
 		x = 0;
@@ -22,12 +22,7 @@ void renderThread(int startRow, int endRow, int startCol, int endCol, int width,
 }
 
 int main(int argc, char* argv[]) {
-	// get config info
-	int width = config::getInt("width");
-	int height = config::getInt("height");
-	if (width < 1 || height < 1) {
-		return 0;
-	}
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
  
 	// coordinates
 	float y = 0.5f, x = 0.5f;
@@ -35,62 +30,87 @@ int main(int argc, char* argv[]) {
 	// gui
 	gui::setup();
 
-	// frac
-	fractal* f = new fractal();
-	//while (math::de::main(f->cam, f->rot, f->shift, 1.0f, f->iter) < 0.0f) {
-		//f->cam += math::vec3(0.0f, 0.0f, 100.0f);
-		//std::cout << f->cam.x << " " << f->cam.y << " " << f->cam.z << std::endl;
-	//}
+	// get config info
+	int width = config::getInt("width");
+	int height = config::getInt("height");
+	int threadCount = config::getInt("threads");
 
-	f->cam = math::vec3(0.0f, 0.0f, 60.0f);
-	// multithread	
+	// pointer to fractal class
+	fractal* f = new fractal();
+
+	// pointer to fractal region
+	region* reg = new region(width, height, f);
+
+	// pointer to 2d matrix of pixels. it'll be accessible
+	// by every thread
 	std::vector<std::vector<math::vec3>>* image = new std::vector<std::vector<math::vec3>>(height, std::vector<math::vec3>(width, math::vec3()));
 
-	unsigned long long imageSize = width * height;
-	unsigned long long thread_cnt = 1000;
-	thread_cnt = std::min(thread_cnt, imageSize);
+	// thread array
 	std::vector<std::thread> threads;
-	int chunk = imageSize / thread_cnt;
 
-	int lastY = chunk / width - 1;
-	int lastX = chunk % width - 1;
+	// thread constants
+	int chunk = width * height / threadCount;
+	int lastY = 0;
+	int lastX = 0;
 
-	for (int threadNum = 1; threadNum < thread_cnt; ++threadNum) {
+	// thread assignment loop. this loop assigns to every thread
+	// the render function with the right coordinates and stores
+	// it on the thread array
+	for (int i = 0; i < threadCount; ++i) {
 		int y = lastY;
 		int x = lastX;
 		int count = 0;
-		for (; x < width && count < chunk; ++x) {
-			++count;
-		}
-		x = 0;
-		for (; y < height && count < chunk; ++y) {
-			for (; x < width && count < chunk; ++x) {
-				++count;
+		for (; y < height && count < chunk; ) {
+			for (; x < width && count < chunk; ) {
+				if (++count == chunk) {
+					break;
+				}
+				++x;
 			}
-			if (count != chunk) x = 0;
+			if (count < chunk) {
+				x = 0;
+				++y;
+			}
 		}
-		threads.push_back(std::thread(renderThread, lastY, y, lastX, x, width, height, chunk, f, image));
+
+		// skip the first chunk because that one will be rendered
+		// by the main thread later
+		if (i > 0) {
+			threads.push_back(std::thread{renderRange, lastY, y, lastX, x, width, height, chunk, reg, f, image});
+		}
+
+		// advance one coordinate to set the starter coordinate
+		// for the next loop, since this coordinate has already
+		// been enqueued to be computed in the previously called
+		// thread
+		if (x + 1 == width) {
+			x = 0;
+			++y;
+		} else {
+			++x;
+		}
+
+		// save starter coordinates
 		lastY = y;
 		lastX = x;
 	}
 
 	// fill the remaining image portion which is smaller
-	// than one chunk
-	threads.push_back(std::thread(renderThread, lastY, height - 1, lastX, width - 1, width, height, chunk, f, image));
+	// than one chunk in case there's any
+	if ((width * height) % threadCount != 0) {
+		threads.push_back(std::thread{renderRange, lastY, height, lastX, width, width, height, chunk, reg, f, image});
+	}
 
-	// render the first chunk in this thread to update gui
+	// render the first chunk in the main application thread
+	// so that it can update the gui progress bar
 	int count = 0;
-	std::thread guiUpdate(gui::update, &count, chunk);
-	region reg(width, height, f);
+	std::thread{gui::update, &count, chunk}.detach();
 	for (int y = 0; y < height && count < chunk; ++y) {
-		reg.setYCoord((float)height - ((float)y + 0.5f));
 		for (int x = 0; x < width && count < chunk; ++x) {
-			reg.setXCoord((float)x + 0.5f);
-			(*image)[y][x] = reg.render();
+			(*image)[y][x] = reg->render((float)height - ((float)y + 0.5f), (float)x + 0.5f);
 			++count;
 		}
 	}
-	guiUpdate.join();
 
 	// wait for rendering threads to finish
 	for (auto& thread : threads) {
@@ -101,13 +121,15 @@ int main(int argc, char* argv[]) {
 	std::ofstream out("out.ppm");
 	out << "P3\n" << width << ' ' << height << ' ' << 255 << '\n';
 	for (int i = 0; i < height; ++i) {
-		for (const auto& pixel : (*image)[i]) {
+		for (int j = 0; j < width; ++j) {
+			math::vec3 pixel = (*image)[i][j];
 			out << (int)pixel.x << ' ' << (int)pixel.y << ' ' << (int)pixel.z << '\n';
 		}
 	}
 
 	// free memory
 	delete f;
+	delete reg;
 	delete image;
 
 	return 0;

@@ -4,30 +4,76 @@
 #define PI 3.14159265358979
 
 namespace math {
+
+	// vector constructors
 	vec3::vec3() : x(0.0f), y(0.0f), z(0.0f) {}
 	vec3::vec3(float v) : x(v), y(v), z(v) {}
 	vec3::vec3(float x, float y, float z) : x(x), y(y), z(z) {}
-	
-	float length(const vec3& r) {
-		return std::sqrt(r.x * r.x + r.y * r.y + r.z * r.z);
+
+	//vector operator overloading
+	vec3 vec3::operator + (const vec3& r) {
+		return vec3(x + r.x, y + r.y, z + r.z);
 	}
-	vec3 normalize(vec3 v) {
-		return v / length(v);
+	vec3 vec3::operator - (const vec3& r) {
+		return vec3(x - r.x, y - r.y, z - r.z);
 	}
-	float mod(float x, float y) {
-		return x - y * std::floor(x / y);
+	vec3 vec3::operator * (const vec3& r) {
+		return vec3(x * r.x, y * r.y, z * r.z);
 	}
-	vec3 abs(vec3 v) {
-		return vec3(std::abs(v.x), std::abs(v.y), std::abs(v.z));
+	vec3 vec3::operator * (float v) {
+		return vec3(x * v, y * v, z * v);
 	}
-	float max(const vec3& r) {
-		return std::max(r.x, std::max(r.y, r.z));
+	vec3 vec3::operator / (const vec3& r) {
+		return vec3(x / r.x, y / r.y, z / r.z);
 	}
-	vec3 max(const vec3& r1, const vec3& r2) {
-		return vec3(std::max(r1.x, r2.x), std::max(r1.y, r2.y), std::max(r1.z, r2.z));
+	vec3 vec3::operator / (float v) {
+		return vec3(x / v, y / v, z / v);
 	}
-	float dot(const vec3& r1, const vec3& r2) {
-		return r1.x * r2.x, r1.y * r2.y, r1.z * r2.z;
+	void vec3::operator = (const vec3& r) {
+		x = r.x;
+		y = r.y;
+		z = r.z;
+	}
+	void vec3::operator += (const vec3& r) {
+		x += r.x;
+		y += r.y;
+		z += r.z;
+	}
+	void vec3::operator -= (const vec3& r) {
+		x -= r.x;
+		y -= r.y;
+		z -= r.z;
+	}
+	void vec3::operator *= (const vec3& r) {
+		x *= r.x;
+		y *= r.y;
+		z *= r.z;
+	}
+	void vec3::operator *= (float v) {
+		x *= v;
+		y *= v;
+		z *= v;
+	}
+	void vec3::operator /= (const vec3& r) {
+		x /= r.x;
+		y /= r.y;
+		z /= r.z;
+	}
+	void vec3::operator /= (float v) {
+		x /= v;
+		y /= v;
+		z /= v;
+	}
+
+	//vector arithmetic functions
+	float vec3::length() {
+		return std::sqrt(x * x + y * y + z * z);
+	}
+	vec3 vec3::normalize() {
+		return *this / length();
+	}
+	vec3 vec3::absolute() {
+		return vec3(std::abs(x), std::abs(y), std::abs(z));
 	}
 
 	vec3 calcRayDir(vec3 rot, float xcoord, float ycoord, int WIDTH, int HEIGHT, int FOV) {
@@ -35,9 +81,9 @@ namespace math {
 		float x = xcoord - WIDTH / 2.0f;
 		float y = ycoord - HEIGHT / 2.0f;
 		float z = HEIGHT / std::tan(FOV * PI / 180.0f / 2.0f);
-		vec3 a = normalize(vec3(x, y, -z));
+		vec3 a = vec3(x, y, -z).normalize();
 		// compute rotation
-			return a;
+		return a;
 	}
 
 	namespace fold {
@@ -75,20 +121,48 @@ namespace math {
 		}
 	}
 
+	namespace color {
+		vec3 main(vec3 p, vec3 col, const vec3& rot, const vec3& shift, float scale, int iter) {
+			vec3 orbit(0.0f);
+			for (int i = 0; i < iter; ++i) {
+				p = p.absolute();
+				rotation::z(p, rot.z);
+				fold::menger(p);
+				rotation::x(p, rot.x);
+				p *= scale;
+				p += shift;
+				vec3 pc = p * col;
+				orbit = vec3(std::max(orbit.x, pc.x), std::max(orbit.y, pc.y), std::max(orbit.z, pc.z));
+			}
+			return orbit;
+		}
+
+		vec3 smooth(vec3 p, vec3 s1, vec3 s2, float dx, vec3 col, const vec3& rot, const vec3& shift, float scale, int iter) {
+			return (main(p+vec3(s1)*dx, col, rot, shift, scale, iter)+
+							main(p-vec3(s1)*dx, col, rot, shift, scale, iter)+
+							main(p+vec3(s2)*dx, col, rot, shift, scale, iter)+
+							main(p-vec3(s2)*dx, col, rot, shift, scale, iter));
+		}
+	}
+
 	namespace de {
 		float sphere(vec3 point, float size) {
 			//point.x = mod(point.x, 1.0f) - 0.5f;
 			//point.y = mod(point.y, 1.0f) - 0.5f;
 			//point.z = mod(point.z, 1.0f) - 0.5f;
-			return length(point) - size;
+			return point.length() - size;
 		}
+
 		float box(vec3 p, vec3 b) {
-			vec3 a = abs(p) - b;
-			return length(max(a, vec3(0.0f))) + std::min(max(a), 0.0f);
-		}	
+			vec3 a = p.absolute() - b;
+			
+			return vec3(std::max(a.x, 0.0f), std::max(a.y, 0.0f), std::max(a.z, 0.0f)).length() + std::min(std::max(a.x, std::max(a.y, a.z)), 0.0f);
+		}
+
+
 		float main(vec3 p, const vec3& rot, const vec3& shift, float scale, int iter) {
 			for (int i = 0; i < iter; ++i) {
-				p = abs(p);
+				p = p.absolute();
 				rotation::z(p, rot.z);
 				fold::menger(p);
 				rotation::x(p, rot.x);

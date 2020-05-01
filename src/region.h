@@ -10,14 +10,9 @@ private:
 	fractal* f;
 	int WIDTH;
 	int HEIGHT;
-	float xcoord;
-	float ycoord;
 public:
 	region(int width, int height, fractal* f);
 	~region();
 
-	void setXCoord(float v);
-	void setYCoord(float v);
-
-	math::vec3 render();
+	math::vec3 render(float y, float x);
 };

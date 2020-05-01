@@ -96,19 +96,22 @@ namespace gui {
 	}
 	
 	void update(int* curV, int tarV) {
-		for (; *curV < tarV; ){
+
+		float lockedValue = *curV;
+		do{
+			lockedValue = *curV;
 			// width of logo is 34 characters. two of which
 			// will be used for the extremes of the bar.
 			// terminal colors are represented with expressions
 			// like "\033[x;xx"
 			std::cout << "\r\033[1;36m[";
-			int quantity = 1 + 32 * (*curV) / tarV;
+			int quantity = 1 + 32 * lockedValue / tarV;
 			for (int i = 0; i < 32; ++i) {
 				std::cout << (i < quantity ? "\033[1;36m=" : "\033[0m-");
 			}
 			std::cout << "\033[1;36m]" << std::flush;
 			std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		}
+		} while (lockedValue < tarV);
 		std::cout << "\033[0m\n\n";
 	}
 }
