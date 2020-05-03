@@ -10,25 +10,34 @@ namespace math {
 		vec3(float x, float y, float z);
 
 		// operator overloading
+		
+		// basic arithmetic
 		vec3 operator + (const vec3& r);
 		vec3 operator - (const vec3& r);
 		vec3 operator * (const vec3& r);
 		vec3 operator * (float v);
 		vec3 operator / (const vec3& r);
 		vec3 operator / (float v);
+
+		// assignment operator
 		void operator = (const vec3& r);
+
+		// comparison operators
+		bool operator == (const vec3& r);
+		bool operator != (const vec3& r);
+
+		// arithmetic and assignment operators
 		void operator += (const vec3& r);
 		void operator -= (const vec3& r);
 		void operator *= (const vec3& r);
 		void operator *= (float v);
 		void operator /= (const vec3& r);
 		void operator /= (float v);
-
-		// basic arithmetic
-		float length();
-		vec3 normalize();
-		vec3 absolute();
 	};
+
+	extern float length(vec3 v);
+	extern vec3 normalize(vec3 v);
+	extern vec3 absolute(vec3 v);
 
 	// region specific functions
 	extern vec3 calcRayDir(vec3 rot, float xcoord, float ycoord, int WIDTH, int HEIGHT, int FOV);
@@ -47,15 +56,9 @@ namespace math {
 		extern void z(vec3& r, float a);
 	}
 
-	namespace color {
-		extern vec3 main(vec3 p, vec3 col, const vec3& rot, const vec3& shift, float scale, int iter);
-		extern vec3 smooth(vec3 p, vec3 s1, vec3 s2, float dx, vec3 col, const vec3& rot, const vec3& shift, float scale, int iter);
-	}
-
 	// distance estimators
 	namespace de {
 		extern float sphere(vec3 p, float size);
 		extern float box(vec3 p, vec3 s);
-		extern float main(vec3 p, const vec3& rot, const vec3& shift, float scale, int iter);
 	}
 }

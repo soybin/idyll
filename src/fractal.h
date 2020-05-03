@@ -15,18 +15,45 @@
 
 #include "math.h"
 #include <vector>
+#include <string>
 
-struct fractal {
-	fractal();
-	~fractal();
+// this structure constitutes the list of operations applied
+// to each iteration of the fractal.
+//
+struct operation {
+	// R -> rotation
+	// S -> shift
+	// F -> fold
+	char action;
 
-	int fov;
-	int iter;
-	math::vec3 cam;
-	math::vec3 col;
-	math::vec3 rot;
+	// X, Y or Z in the case of rotation and shift
+	char specification;
+
+	// whatever value to apply
+	float value;
+};
+
+class fractal {
+private:
+	// fractal's variables. randomly set at runtime
+	int iterations;
+	float scale;
+	math::vec3 color;
+	math::vec3 rotation;
 	math::vec3 shift;
 	// this is the list of operations that will be executed
 	// per rendering loop. creating 
-	std::vector<char> operations;
+	std::vector<operation> operations;
+
+	// this is used when computing color and DE
+	math::vec3 iteratePoint(vec3& point);
+public:
+	fractal();
+	~fractal();
+
+	// main distance estimator
+	float de(math::vec3 point);
+	float calculateShadow(math::vec3 point, math::vec3 lightDirection);
+	math::vec3 calculateColor(math::vec3 point, math::vec3 s1, math::vec3 s2, float radius);
+	math::vec3 calculateNormal(math::vec3 point, float radius);
 };

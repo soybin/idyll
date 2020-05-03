@@ -6,12 +6,11 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
-#include <chrono>
 
 // this function wil be instantiated in multiple threads at runtime. it iterates
 // through a specified range in a 2d matrix and renders every pixel in the range.
 // then it stores the pixel value at the "image" 2d matrix
-void renderRange(int startRow, int endRow, int startCol, int endCol, int width, int height, int chunk, region* reg, fractal* f, std::vector<std::vector<math::vec3>>* image) {
+void renderRange(int startRow, int endRow, int startCol, int endCol, int width, int height, int chunk, region* reg, std::vector<std::vector<math::vec3>>* image) {
 	for (int y = startRow, x = startCol; y < height && (y < endRow || chunk > 0); ++y) {
 		for (; x < width && (x < endCol || chunk > 0); ++x) {
 			(*image)[y][x] = reg->render((float)height - ((float)y + 0.5f), (float)x + 0.5f);
@@ -22,8 +21,6 @@ void renderRange(int startRow, int endRow, int startCol, int endCol, int width, 
 }
 
 int main(int argc, char* argv[]) {
-	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
- 
 	// coordinates
 	float y = 0.5f, x = 0.5f;
 
@@ -55,7 +52,7 @@ int main(int argc, char* argv[]) {
 
 	// thread assignment loop. this loop assigns to every thread
 	// the render function with the right coordinates and stores
-	// it on the thread array
+	// it on the thread array	
 	for (int i = 0; i < threadCount; ++i) {
 		int y = lastY;
 		int x = lastX;
@@ -76,7 +73,7 @@ int main(int argc, char* argv[]) {
 		// skip the first chunk because that one will be rendered
 		// by the main thread later
 		if (i > 0) {
-			threads.push_back(std::thread{renderRange, lastY, y, lastX, x, width, height, chunk, reg, f, image});
+			threads.push_back(std::thread{renderRange, lastY, y, lastX, x, width, height, chunk, reg, image});
 		}
 
 		// advance one coordinate to set the starter coordinate
@@ -98,7 +95,7 @@ int main(int argc, char* argv[]) {
 	// fill the remaining image portion which is smaller
 	// than one chunk in case there's any
 	if ((width * height) % threadCount != 0) {
-		threads.push_back(std::thread{renderRange, lastY, height, lastX, width, width, height, chunk, reg, f, image});
+		threads.push_back(std::thread{renderRange, lastY, height, lastX, width, width, height, chunk, reg, image});
 	}
 
 	// render the first chunk in the main application thread
