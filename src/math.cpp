@@ -81,15 +81,30 @@ namespace math {
 	vec3 absolute(vec3 v) {
 		return vec3(std::abs(v.x), std::abs(v.y), std::abs(v.z));
 	}
-
-	vec3 calcRayDir(vec3 rot, float xcoord, float ycoord, int WIDTH, int HEIGHT, int FOV) {
-		// find direction vector
-		float x = xcoord - WIDTH / 2.0f;
-		float y = ycoord - HEIGHT / 2.0f;
-		float z = HEIGHT / std::tan(FOV * PI / 180.0f / 2.0f);
-		vec3 a = normalize(vec3(x, y, -z));
-		// compute rotation
-		return a;
+	vec3 cross(vec3 v1, vec3 v2) {
+		return vec3(v1.y * v2.z - v2.y * v1.z,
+								v1.z * v2.x - v2.z * v1.x,
+								v1.x * v2.y - v2.x * v1.y);
+	}
+	vec3 mix(vec3 rangeMin, vec3 rangeMax, float v) {
+		return rangeMin * (1.0f - v) + rangeMax * v;
+	}
+	vec3 clamp(vec3 v, float rangeMin, float rangeMax) {
+		v.x = std::min(std::max(v.x, rangeMin), rangeMax);
+		v.y = std::min(std::max(v.y, rangeMin), rangeMax);
+		v.z = std::min(std::max(v.z, rangeMin), rangeMax);
+		return v;
+	}
+	vec3 rotateVector(vec3& r, vec3 rotation) {
+		math::vec3 ax(1.0f, 0.0f, 0.0f);
+		math::vec3 ay(0.0f, 1.0f, 0.0f);
+		math::vec3 az(0.0f, 0.0f, 1.0f);
+		rotation.x = std::cos(rotation.x * PI / 180.0f);
+		rotation.y = std::cos(rotation.y * PI / 180.0f);
+		rotation.z = std::cos(rotation.z * PI / 180.0f);
+		r = r * rotation.x + (ax * r) + ax * (ax * r) * (1.0f - rotation.x);
+		r = r * rotation.y + (ay * r) + ay * (ay * r) * (1.0f - rotation.y);
+		r = r * rotation.z + (az * r) + az * (az * r) * (1.0f - rotation.z);
 	}
 
 	namespace fold {

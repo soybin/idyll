@@ -35,12 +35,14 @@ namespace math {
 		void operator /= (float v);
 	};
 
+	// basic vector arithmetic
 	extern float length(vec3 v);
 	extern vec3 normalize(vec3 v);
 	extern vec3 absolute(vec3 v);
-
-	// region specific functions
-	extern vec3 calcRayDir(vec3 rot, float xcoord, float ycoord, int WIDTH, int HEIGHT, int FOV);
+	extern vec3 cross(vec3 v1, vec3 v2);
+	extern vec3 mix(vec3 rangeMin, vec3 rangeMax, float v);
+	extern vec3 clamp(vec3 v, float rangeMin, float rangeMax);
+	extern vec3 rotateVector(vec3& r, vec3 rotations);
 
 	// folds
 	namespace fold {

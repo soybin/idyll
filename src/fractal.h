@@ -35,18 +35,18 @@ struct operation {
 
 class fractal {
 private:
-	// fractal's variables. randomly set at runtime
+	// fractal's variables. randomly set at runtime. stored at the
+	// seed
 	int iterations;
 	float scale;
 	math::vec3 color;
-	math::vec3 rotation;
-	math::vec3 shift;
+
 	// this is the list of operations that will be executed
 	// per rendering loop. creating 
 	std::vector<operation> operations;
 
 	// this is used when computing color and DE
-	math::vec3 iteratePoint(vec3& point);
+	void iteratePoint(math::vec3& point);
 public:
 	fractal();
 	~fractal();
