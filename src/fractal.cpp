@@ -6,8 +6,8 @@
 fractal::fractal() {
 	iterations = 20;//seed::i(16, 24);
 	scale = seed::f(6.0f, 6.0f);
-	color = math::vec3(0.53f, 0.1f, 0.94f);
-	operations = {{'R', 'X', -0.2f}, {'S', 'Y', 0.12f}, {'F', '0', 0.0f} ,{'R', 'Z', -0.1f}};
+	color = math::vec3(0.63f, 0.1f, 0.5f);
+	operations = {{'R', 'X', -0.2f}, {'S', 'Z', 0.2f}, {'F', '0', 0.0f} ,{'R', 'Z', -0.1f}, {'R', 'Y', -0.05f}};
 }
 
 fractal::~fractal() {
