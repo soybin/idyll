@@ -6,5 +6,5 @@
 
 namespace seed {
 	extern int i(int min, int max);
-	extern float f(float min, float max);
+	extern double f(double min, double max);
 }

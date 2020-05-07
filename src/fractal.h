@@ -24,13 +24,15 @@ struct operation {
 	// R -> rotation
 	// S -> shift
 	// F -> fold
-	char action;
+	// mapped to 1, 2, 3
+	int action;
 
 	// X, Y or Z in the case of rotation and shift
-	char specification;
+	// mapped to 1, 2, 3
+	int specification;
 
 	// whatever value to apply
-	float value;
+	double value;
 };
 
 class fractal {
@@ -38,7 +40,7 @@ private:
 	// fractal's variables. randomly set at runtime. stored at the
 	// seed
 	int iterations;
-	float scale;
+	double scale;
 	math::vec3 color;
 
 	// this is the list of operations that will be executed
@@ -52,8 +54,8 @@ public:
 	~fractal();
 
 	// main distance estimator
-	float de(math::vec3 point);
-	float calculateShadow(math::vec3 point, math::vec3 lightDirection);
-	math::vec3 calculateColor(math::vec3 point, math::vec3 s1, math::vec3 s2, float radius);
-	math::vec3 calculateNormal(math::vec3 point, float radius);
+	double de(math::vec3 point);
+	double calculateShadow(math::vec3 point, math::vec3 lightDirection);
+	math::vec3 calculateColor(math::vec3 point, math::vec3 s1, math::vec3 s2, double radius);
+	math::vec3 calculateNormal(math::vec3 point, double radius);
 };

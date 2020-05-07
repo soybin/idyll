@@ -9,7 +9,7 @@ namespace seed {
 		return dist(rng);
 	}
 
-	float f(float min, float max) {
+	double f(double min, double max) {
 		std::random_device dev;
 		std::mt19937 rng(dev());
 		std::uniform_real_distribution<> dist(min, max);

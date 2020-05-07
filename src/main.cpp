@@ -13,7 +13,7 @@
 void renderRange(int startRow, int endRow, int startCol, int endCol, int width, int height, int chunk, region* reg, std::vector<std::vector<math::vec3>>* image) {
 	for (int y = startRow, x = startCol; y < height && (y < endRow || chunk > 0); ++y) {
 		for (; x < width && (x < endCol || chunk > 0); ++x) {
-			(*image)[y][x] = reg->render((float)height - ((float)y + 0.5f), (float)x + 0.5f);
+			(*image)[y][x] = reg->render((double)height - ((double)y + 0.5), (double)x + 0.5);
 			--chunk;
 		}
 		x = 0;
@@ -22,7 +22,7 @@ void renderRange(int startRow, int endRow, int startCol, int endCol, int width, 
 
 int main(int argc, char* argv[]) {
 	// coordinates
-	float y = 0.5f, x = 0.5f;
+	double y = 0.5, x = 0.5;
 
 	// gui
 	gui::setup();
@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
 	std::thread{gui::update, &count, chunk}.detach();
 	for (int y = 0; y < height && count < chunk; ++y) {
 		for (int x = 0; x < width && count < chunk; ++x) {
-			(*image)[y][x] = reg->render((float)height - ((float)y + 0.5f), (float)x + 0.5f);
+			(*image)[y][x] = reg->render((double)height - ((double)y + 0.5f), (double)x + 0.5);
 			++count;
 		}
 	}

@@ -97,7 +97,7 @@ namespace gui {
 	
 	void update(int* curV, int tarV) {
 
-		float lockedValue = *curV;
+		double lockedValue = *curV;
 		do{
 			lockedValue = *curV;
 			// width of logo is 34 characters. two of which
