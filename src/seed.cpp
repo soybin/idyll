@@ -1,18 +1,20 @@
 #include "seed.h"
 
-namespace seed {
+// mersennes' twister prng algo initialized with random device
+// seed
 
-	int i(int min, int max) {
-		std::random_device dev;
-		std::mt19937 rng(dev());
-		std::uniform_int_distribution<std::mt19937::result_type> dist(min, max);
-		return dist(rng);
-	}
+seed::seed() : rng(dev()) {
+}
 
-	double f(double min, double max) {
-		std::random_device dev;
-		std::mt19937 rng(dev());
-		std::uniform_real_distribution<> dist(min, max);
-		return dist(rng);
-	}
+seed::~seed() {
+}
+
+int seed::i(int min, int max) {
+	std::uniform_int_distribution<int> dice(min, max);
+	return dice(rng);
+}
+
+double seed::d(double min, double max) {
+	std::uniform_real_distribution<double> dice(min, max);
+	return dice(rng);
 }

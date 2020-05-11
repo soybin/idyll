@@ -35,8 +35,17 @@ namespace math {
 		void operator /= (double v);
 	};
 
+	struct ray {
+		ray(vec3 o, vec3 d) : origin(o), direction(d) {}
+		vec3 origin;
+		vec3 direction;
+	};
+
 	// basic vector arithmetic
 	extern double length(vec3 v);
+	extern double dot(vec3 v1, vec3 v2);
+	extern double clamp(double v, double rangeMin, double rangeMax);
+	extern double smoothstep(double e0, double e1, double x);
 	extern vec3 normalize(vec3 v);
 	extern vec3 absolute(vec3 v);
 	extern vec3 cross(vec3 v1, vec3 v2);

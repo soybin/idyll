@@ -75,6 +75,16 @@ namespace math {
 	double length(vec3 v) {
 		return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 	}
+	double dot(vec3 v1, vec3 v2) {
+		return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+	}
+	double clamp(double v, double rangeMin, double rangeMax) {
+		return std::min(std::max(v, rangeMin), rangeMax);
+	}
+	double smoothstep(double e0, double e1, double x) {
+    double t = clamp((x - e0) / (e1 - e0), 0.0, 1.0);
+    return t * t * (3.0 - 2.0 * t);
+	}
 	vec3 normalize(vec3 v) {
 		return v / length(v);
 	}

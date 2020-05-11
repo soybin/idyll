@@ -49,6 +49,9 @@ namespace config {
 		file << "width 1920\n";
 		file << "height 1080\n";
 		file << "\n";
+		file << "# number of samples #\n";
+		file << "# more samples means less noise #\n";
+		file << "samples 4\n";
 		file << "# multithread instructions #\n";
 		file << "threads 100\n";
 		file << "\n";

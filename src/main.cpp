@@ -2,7 +2,8 @@
 #include "fractal.h"
 #include "gui.h"
 #include "math.h"
-#include "region.h"
+#include "seed.h"
+#include "renderer.h"
 #include <fstream>
 #include <iostream>
 #include <thread>
@@ -10,10 +11,10 @@
 // this function wil be instantiated in multiple threads at runtime. it iterates
 // through a specified range in a 2d matrix and renders every pixel in the range.
 // then it stores the pixel value at the "image" 2d matrix
-void renderRange(int startRow, int endRow, int startCol, int endCol, int width, int height, int chunk, region* reg, std::vector<std::vector<math::vec3>>* image) {
+void renderRange(int startRow, int endRow, int startCol, int endCol, int width, int height, int chunk, renderer* r, std::vector<std::vector<math::vec3>>* image) {
 	for (int y = startRow, x = startCol; y < height && (y < endRow || chunk > 0); ++y) {
 		for (; x < width && (x < endCol || chunk > 0); ++x) {
-			(*image)[y][x] = reg->render((double)height - ((double)y + 0.5), (double)x + 0.5);
+			(*image)[y][x] = r->render((double)height - ((double)y + 0.5), (double)x + 0.5);
 			--chunk;
 		}
 		x = 0;
@@ -32,11 +33,14 @@ int main(int argc, char* argv[]) {
 	int height = config::getInt("height");
 	int threadCount = config::getInt("threads");
 
-	// pointer to fractal class
-	fractal* f = new fractal();
+	// pointer to seed object
+	seed* s = new seed();
 
-	// pointer to fractal region
-	region* reg = new region(width, height, f);
+	// pointer to fractal object
+	fractal* f = new fractal(s);
+
+	// pointer to fractal rion
+	renderer* r = new renderer(width, height, s, f);
 
 	// pointer to 2d matrix of pixels. it'll be accessible
 	// by every thread
@@ -73,7 +77,7 @@ int main(int argc, char* argv[]) {
 		// skip the first chunk because that one will be rendered
 		// by the main thread later
 		if (i > 0) {
-			threads.push_back(std::thread{renderRange, lastY, y, lastX, x, width, height, chunk, reg, image});
+			threads.push_back(std::thread{renderRange, lastY, y, lastX, x, width, height, chunk, r, image});
 		}
 
 		// advance one coordinate to set the starter coordinate
@@ -95,7 +99,7 @@ int main(int argc, char* argv[]) {
 	// fill the remaining image portion which is smaller
 	// than one chunk in case there's any
 	if ((width * height) % threadCount != 0) {
-		threads.push_back(std::thread{renderRange, lastY, height, lastX, width, width, height, chunk, reg, image});
+		threads.push_back(std::thread{renderRange, lastY, height, lastX, width, width, height, chunk, r, image});
 	}
 
 	// render the first chunk in the main application thread
@@ -104,7 +108,7 @@ int main(int argc, char* argv[]) {
 	std::thread{gui::update, &count, chunk}.detach();
 	for (int y = 0; y < height && count < chunk; ++y) {
 		for (int x = 0; x < width && count < chunk; ++x) {
-			(*image)[y][x] = reg->render((double)height - ((double)y + 0.5f), (double)x + 0.5);
+			(*image)[y][x] = r->render((double)height - ((double)y + 0.5f), (double)x + 0.5);
 			++count;
 		}
 	}
@@ -125,8 +129,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	// free memory
+	delete s;
 	delete f;
-	delete reg;
+	delete r;
 	delete image;
 
 	return 0;
