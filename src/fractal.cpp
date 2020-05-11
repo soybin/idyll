@@ -4,8 +4,10 @@
 #include <iostream>
 
 fractal::fractal(seed* s) : s(s) {
-	iterations = 10;//seed::i(16, 20);
-	scale = 1.0;//seed::f(6.0, 6.0);
+	iterations = 7;
+	scale = 1.0;
+	gradientTop = math::vec3(0.9, 0.2, 0.3);
+	gradientBottom = math::vec3(0.1, 0.1, 0.9);
 	rz = -0.14;
 	rx = -0.23;
 	shift.x = -0.53;
@@ -35,7 +37,8 @@ double fractal::de(math::vec3 point) {
 	return math::de::box(point, math::vec3(1.0));
 }
 
-// soft shadowing technique. explained in detal at inigo quilez's blog
+// shadowing technique. 
+// explained in detal at inigo quilez's blog:
 // https://iquilezles.org/www/articles/rmshadows/rmshadows.htm
 double fractal::calculateShadow(math::ray r) {
 	double res = 0.0;
@@ -65,11 +68,8 @@ math::vec3 fractal::calculateColor(math::vec3 point) {
 	return orbit;
 }
 
-// tetrahedron technique. this is the most efficient way to calculate
-// a surface normal at a specific point since it only takes four
-// calls to the distance estimator insted of the six calls required
-// by the classical forward and central differences technique.
-// explained in detal at inigo quilez blog
+// classical forward and central differences technique.
+// explained in detal at inigo quilez blog:
 // https://www.iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
 math::vec3 fractal::calculateNormal(math::vec3 point) {
 	double e = 0.0001;
@@ -81,15 +81,4 @@ math::vec3 fractal::calculateNormal(math::vec3 point) {
 				de(point + yxy) - de(point - yxy),
 				de(point + yyx) - de(point - yyx)
 				));
-	/* the four tetrahedron vertices
-	math::vec3 v1(1.0, -1.0, -1.0);
-	math::vec3 v2(-1.0, -1.0, 1.0);
-	math::vec3 v3(-1.0, 1.0, -1.0);
-	math::vec3 v4(1.0, 1.0, 1.0);
-	return normalize(
-			v1 * de(point + v1 * radius) +
-			v2 * de(point + v2 * radius) +
-			v3 * de(point + v3 * radius) +
-			v4 * de(point + v4 * radius)
-	);*/
 }

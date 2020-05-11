@@ -5,7 +5,7 @@
 #include <iostream>
 
 const int MAX_STEP = 128;
-const double MAX_DIST = 16.0;
+const double MAX_DIST = 32.0;
 const double MIN_DIST = 1e-4;
 const double PI = 3.14159265358979;
 
@@ -17,7 +17,6 @@ math::vec3 renderer::calculateRayDirection(double xcoord, double ycoord) {
 	double y = ycoord - HEIGHT / 2.0;
 	double z = HEIGHT / std::tan(FOV * PI / 180.0 / 2.0);
 	math::vec3 a = math::vec3(x, y, -z);
-
 	//
 	// apply rotations
 	//
@@ -34,33 +33,32 @@ math::vec3 renderer::calculateRayDirection(double xcoord, double ycoord) {
 	return math::normalize(a);
 }
 
-math::vec3 renderer::renderSky(double y, double x) {
+math::vec3 renderer::renderSky(math::ray r, double y, double x) {
 	double yy = y / HEIGHT;
 	double xx = x / WIDTH;
-	math::vec3 g1(0.8, 0.4, 0.4), g2(0.9, 0.2, 0.56);
-	return g1 * yy + g2 * (1.0 - yy);
+	return (f->gradientTop * yy + f->gradientBottom * (1.0 - yy)) * s->d(SKY_NOISE, 1.0);
 }
 
 renderer::renderer(int WIDTH, int HEIGHT, seed* s, fractal* f) 	: WIDTH(WIDTH), HEIGHT(HEIGHT), s(s), f(f) {
 
-	skyColor = math::vec3(0.8, 0.7, 0.9);
-	lightColor = math::vec3(1.0, 1.0, 1.0);
+	// random field of view
+	FOV = s->i(45, 60);
 
 	// get sample value from config file
 	SAMPLES = config::getInt("samples");
 
-	// random field of view
-	FOV = s->i(60, 60);
+	// set lower bound for randomness in sky noise
+	SKY_NOISE = std::min(std::max(0.8, SAMPLES / 10.0), 1.0);
 
 	// random positioning of the camera along the surface of a
 	// sphere with a certain radius
 	double radius = 0.0;
-	double dist = s->i(3, 12);
+	double dist = s->i(8, 12);
 	for (; f->de(math::vec3(0.0, 0.0, radius)) < dist; ) {
 		++radius;
 	}
 
-	math::vec3 dir(s->d(-1.0, 1.0), s->d(-1.0, 1.0), s->d(-1.0, 1.0));
+	math::vec3 dir(s->d(-1.0, 1.0), s->d(-0.0, 0.0), s->d(-1.0, 1.0));
 	for (double totalDistance = 0.0f;;) {
 		cameraPosition = dir * totalDistance;
 		// change sign of the distance because we are inside the
@@ -74,10 +72,19 @@ renderer::renderer(int WIDTH, int HEIGHT, seed* s, fractal* f) 	: WIDTH(WIDTH), 
 
 	// determine light direction partially based on camera position
 	double cv = 5.0;
-	lightDirection = math::normalize(cameraPosition + math::vec3(s->d(-cv, cv), s->d(-cv, cv), s->d(-cv, cv)));
-	lightDirection.y = s->i(0, 1) ? s->d(.5, 1.0) : s->d(-1.0, -.5);
+	lightDirection.x = s->d(-0.25, 0.25);
+	lightDirection.z = s->d(-0.25, 0.25);
+	lightDirection.y = cameraPosition.y > 0.0 ? s->d(.75, 1.0) : s->d(-1.0, -.5);
 
-	lightDirection = math::vec3(0.0, 1.0, 0.0);
+	// random sky color but still makes sense
+	skyColor.x = s->d(0.75, 1.0);
+	skyColor.y = s->d(skyColor.x - 0.125, skyColor.x + 0.125);
+	skyColor.z = s->d(skyColor.x - 0.25, skyColor.x + 0.25);
+
+	// random light color. i promise this looks good
+	lightColor.x = s->d(0.8, 1.1);
+	lightColor.y = s->d(lightColor.x - 0.25, lightColor.x + 0.25);
+	lightColor.z = s->d(lightColor.x - 0.5, lightColor.x + 0.5);
 
 	// determine camera's rotation so that it always looks
 	// towards the center of the scene regardless of its
@@ -126,6 +133,10 @@ renderer::renderer(int WIDTH, int HEIGHT, seed* s, fractal* f) 	: WIDTH(WIDTH), 
 	// pitch
 	rx = std::asin(y / std::sqrt(x * x + y * y + z * z));
 
+	// add some dispersion to the rotation axis
+	ry += s->d(-0.1, 0.1);
+	rx += s->d(-0.1, 0.1);
+
 	// trig
 	double siny = std::sin(ry);
 	double cosy = std::cos(ry);
@@ -150,9 +161,6 @@ renderer::renderer(int WIDTH, int HEIGHT, seed* s, fractal* f) 	: WIDTH(WIDTH), 
 		math::vec3(0.0, cosx, -sinx),
 		math::vec3(0.0, sinx, cosx)
 	};
-
-	// add some distortion to the rotation
-	ry += s->d(-5.0, 5.0);
 }
 
 // raymarch
@@ -184,102 +192,104 @@ math::vec3 renderer::lambertReflection(math::vec3 normal) {
 	return math::normalize(normal + point);
 }
 
-//
-// path tracing
-//
-math::vec3 renderer::pathTrace(math::ray r, int levels) {
-	math::vec3 colorBounce(1.0);
-	math::vec3 colorAccumulated(0.0);
-
-	double fdist = 0.0;
-	for (int i = 0; i < levels; ++i) {
-		//
-		// get distance from fractal marching the ray's direction
-		//
-		double distance = march(r);
-		if (distance < 0.0) {
-			if (i == 0) {
-				return math::vec3(-1.0);
-			}
-			break;
-		}
-
-		if (i == 0) {
-			fdist = distance;
-		}
-
-		//
-		// get current position and normal
-		//
-		math::vec3 point = r.origin + r.direction * distance;
-		math::vec3 normal = f->calculateNormal(point);	
-
-		//
-		// get fractal surface color
-		//
-		colorBounce *= math::vec3(1.4, 1.2, 1.3) * 0.4;//f->calculateColor(point) * 0.4;
-
-		//
-		// apply lighting
-		//
-		math::vec3 color(0.0);
-		// directional light
-		double dl = std::max(0.0, math::dot(lightDirection, normal));
-		double dlShadow = 1.0;
-		if (dl > 0.0) {
-			dlShadow = f->calculateShadow({r.origin + r.direction * 0.0001, lightDirection});
-		}
-		color += lightColor * dl * dlShadow;
-		// sky dome
-		math::vec3 pSky = lambertReflection(normal);
-		color += skyColor * f->calculateShadow({r.origin + r.direction * 0.0001, pSky});
-
-		//
-		// add to color
-		//
-		colorAccumulated += colorBounce * color;
-
-		//
-		// bounce ray
-		//
-		r.origin = point;
-		r.direction = lambertReflection(normal);
-	}
-
-	//
-	// scaling / grading
-	//
-	double ff = std::exp(-0.01 * fdist * fdist);
-	colorAccumulated *= ff;
-	colorAccumulated += math::vec3(0.9, 1.0, 1.0) * (1.0 - ff) *0.05;
-
-	return colorAccumulated;
-}
-
 renderer::~renderer() {
 }
 
 math::vec3 renderer::render(double y, double x) {
 
-	// nice variables
+	// nice constants
 	double shutterAperture = 0.6;
   double fov = 2.5;
 	double focusDistance = 1.3;
   double blurAmount = 0.0015;
-	int numLevels = 5;
+	int BOUNCES = 5;
 
 	// get ray direction relative to the pixel being rendered
 	// coordinates and rotate it
 	math::vec3 dir = calculateRayDirection(x, y);
 	math::vec3 color(0.0);
+
+	//
+	// render same pixel multiple times
+	//
 	for (int i = 0; i < SAMPLES; ++i) {
+
+		//
+		// data per sample
+		//
 		math::ray r(cameraPosition, dir);
-		math::vec3 c = pathTrace(r, numLevels);
-		if (c == math::vec3(-1.0)) {
-			color += renderSky(y, x);
-		} else {
-			color += c;
+		math::vec3 colorLeft(1.0);
+		math::vec3 colorAccumulated(0.0);
+
+		//
+		// path tracing
+		//
+		double fdist = 0.0;
+		for (int i = 0; i < BOUNCES; ++i) {
+
+			//
+			// get distance from fractal marching the ray's direction
+			//
+			double distance = march(r);
+			if (distance < 0.0) {
+				if (i == 0) {
+					colorAccumulated += renderSky(r, y, x);
+				}
+				break;
+			}
+
+			//
+			// record initial distance
+			//
+			if (i == 0) {
+				fdist = distance;
+			}
+
+			//
+			// get current position and normal
+			//
+			math::vec3 point = r.origin + r.direction * distance;
+			math::vec3 normal = f->calculateNormal(point);	
+
+			//
+			// get fractal surface color
+			//
+			colorLeft *= f->calculateColor(point) * 0.4;
+
+			//
+			// apply lighting
+			//
+			math::vec3 colorAtPoint(0.0);
+			// directional light
+			double dl = std::max(0.0, math::dot(lightDirection, normal));
+			double dlShadow = 1.0;
+			if (dl > 0.0) {
+				dlShadow = f->calculateShadow({r.origin + r.direction * 0.0001, lightDirection});
+			}
+			colorAtPoint += lightColor * dl * dlShadow;
+			// sky light
+			colorAtPoint += skyColor * f->calculateShadow({r.origin + r.direction * 0.0001, lambertReflection(normal)});
+
+			//
+			// add to color
+			//
+			colorAccumulated += colorAtPoint * colorLeft;
+
+			//
+			// bounce ray
+			//
+			r.origin = point;
+			r.direction = lambertReflection(normal);
 		}
+
+		//
+		// scaling / grading
+		//
+		double ff = std::exp(-0.01 * fdist * fdist);
+		colorAccumulated *= ff;
+		colorAccumulated += math::vec3(0.9, 1.0, 1.0) * (1.0 - ff) *0.05;
+
+		color += math::clamp(colorAccumulated, 0.0, 1.0);
 	}
 	//get average of paths colors
 	color /= (double)SAMPLES;

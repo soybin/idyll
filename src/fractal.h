@@ -30,8 +30,8 @@ private:
 	double scale;
 	double rz;
 	double rx;
-	math::vec3 shift;
 	math::vec3 color;
+	math::vec3 shift;
 
 	// this is the list of operations that will be executed
 	// per rendering loop. creating 
@@ -43,6 +43,9 @@ private:
 	// this is used when computing color and DE
 	void iteratePoint(math::vec3& point);
 public:
+	math::vec3 gradientTop;
+	math::vec3 gradientBottom;
+
 	fractal(seed* s);
 	~fractal();
 
