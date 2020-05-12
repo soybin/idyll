@@ -9,6 +9,81 @@ const double MAX_DIST = 32.0;
 const double MIN_DIST = 1e-4;
 const double PI = 3.14159265358979;
 
+void renderer::updateRotationMatrices() {
+	// determine camera's rotation so that it always looks
+	// towards the center of the scene regardless of its
+	// position
+
+	// pitch
+	double ry = 0.0;
+
+	// yaw
+	double rx = 0.0;
+	
+	double x = cameraPosition.x;
+	double y = cameraPosition.y;
+	double z = cameraPosition.z;
+
+	// yaw
+	// to calculate the yaw axis rotation we have to think
+	// about the intersection of the sphere at y height
+	// because the distance towards the center will decrease
+	// as we get closer to the poles. i wasted a whole day 
+	// because of this
+	ry = std::asin(std::abs(z) / std::sqrt(x * x + z * z));
+	if (x < 0.0) {
+		if (z < 0.0) {
+			ry = (PI / 2.0) + ry;
+		} else if (z > 0.0) {
+			ry = (PI / 2.0) - ry;
+		} else {
+			ry = 90.0;
+		}
+	} else if (x > 0.0) {
+		if (z < 0.0) {
+			ry = -((PI / 2.0) + ry);
+		} else if (z > 0.0){
+			ry = -((PI / 2.0) - ry);
+		} else {
+			ry = -(PI / 2.0);
+		}
+	} else {
+		if (z < 0.0) {
+			ry = -PI;
+		} else if (z > 0.0) {
+			ry = 0.0;
+		}
+	}
+
+	// pitch
+	rx = std::asin(y / std::sqrt(x * x + y * y + z * z));
+
+	// trig
+	double siny = std::sin(ry);
+	double cosy = std::cos(ry);
+	double sinx = std::sin(rx);
+	double cosx = std::cos(rx);
+
+	// rotation matrix. 
+	// there's no explicit matrix implementation because there's
+	// only one use case in the domain of this program. i've
+	// implemented it by having a static array of vec3s with
+	// precomputed values that are multiplied by each ray 
+	// direction vector at runtime.
+	// https://en.wikipedia.org/wiki/Rotation_matrix
+	RMy = {
+		math::vec3(cosy, 0.0, siny),
+		math::vec3(0.0, 1.0, 0.0),
+		math::vec3(-siny, 0.0, cosy)
+	};
+
+	RMx = {
+		math::vec3(1.0, 0.0, 0.0),
+		math::vec3(0.0, cosx, -sinx),
+		math::vec3(0.0, sinx, cosx)
+	};
+}
+
 math::vec3 renderer::calculateRayDirection(double xcoord, double ycoord) {
 	//
 	// find direction vector
@@ -53,12 +128,12 @@ renderer::renderer(int WIDTH, int HEIGHT, seed* s, fractal* f) 	: WIDTH(WIDTH), 
 	// random positioning of the camera along the surface of a
 	// sphere with a certain radius
 	double radius = 0.0;
-	double dist = s->i(8, 12);
+	double dist = s->i(3, 4);
 	for (; f->de(math::vec3(0.0, 0.0, radius)) < dist; ) {
 		++radius;
 	}
 
-	math::vec3 dir(s->d(-1.0, 1.0), s->d(-0.0, 0.0), s->d(-1.0, 1.0));
+	math::vec3 dir(s->d(-1.0, 1.0), s->d(-1.0, 1.0), s->d(-1.0, 1.0));
 	for (double totalDistance = 0.0f;;) {
 		cameraPosition = dir * totalDistance;
 		// change sign of the distance because we are inside the
@@ -71,96 +146,22 @@ renderer::renderer(int WIDTH, int HEIGHT, seed* s, fractal* f) 	: WIDTH(WIDTH), 
 	}
 
 	// determine light direction partially based on camera position
-	double cv = 5.0;
-	lightDirection.x = s->d(-0.25, 0.25);
-	lightDirection.z = s->d(-0.25, 0.25);
-	lightDirection.y = cameraPosition.y > 0.0 ? s->d(.75, 1.0) : s->d(-1.0, -.5);
-
+	lightDirection = cameraPosition + math::vec3(s->d(-2.0, 2.0), s->d(-2.0, 2.0), s->d(-2.0, 2.0));
+	lightDirection = math::normalize(lightDirection);
+	//lightDirection.y = cameraPosition.y < 0.0 ? 1.0 : -1.0;
+	lightDirection = math::vec3(0.0) - lightDirection;
+	
+	// random light color. i promise this looks good
+	lightColor.x = s->d(0.75, 1.25);
+	lightColor.y = s->d(lightColor.x - 0.25, lightColor.x + 0.25);
+	lightColor.z = s->d(lightColor.x - 0.5, lightColor.x + 0.5);
+	
 	// random sky color but still makes sense
-	skyColor.x = s->d(0.75, 1.0);
+	skyColor.x = s->d(0.75, 1.25);
 	skyColor.y = s->d(skyColor.x - 0.125, skyColor.x + 0.125);
 	skyColor.z = s->d(skyColor.x - 0.25, skyColor.x + 0.25);
 
-	// random light color. i promise this looks good
-	lightColor.x = s->d(0.8, 1.1);
-	lightColor.y = s->d(lightColor.x - 0.25, lightColor.x + 0.25);
-	lightColor.z = s->d(lightColor.x - 0.5, lightColor.x + 0.5);
-
-	// determine camera's rotation so that it always looks
-	// towards the center of the scene regardless of its
-	// position
-
-	// pitch
-	double ry = 0.0;
-	// yaw
-	double rx = 0.0;
-	
-	double x = cameraPosition.x;
-	double y = cameraPosition.y;
-	double z = cameraPosition.z;
-
-	// yaw
-	// to calculate the yaw axis rotation we have to think
-	// about the intersection of the sphere at y height
-	// because the distance towards the center will decrease
-	// as we get closer to the poles. i wasted a whole day 
-	// because of this
-	ry = std::asin(std::abs(z) / std::sqrt(x * x + z * z));
-	if (x < 0.0) {
-		if (z < 0.0) {
-			ry = (PI / 2.0) + ry;
-		} else if (z > 0.0) {
-			ry = (PI / 2.0) - ry;
-		} else {
-			ry = 90.0;
-		}
-	} else if (x > 0.0) {
-		if (z < 0.0) {
-			ry = -((PI / 2.0) + ry);
-		} else if (z > 0.0){
-			ry = -((PI / 2.0) - ry);
-		} else {
-			ry = -(PI / 2.0);
-		}
-	} else {
-		if (z < 0.0) {
-			ry = -PI;
-		} else if (z > 0.0) {
-			ry = 0.0;
-		}
-	}
-
-	// pitch
-	rx = std::asin(y / std::sqrt(x * x + y * y + z * z));
-
-	// add some dispersion to the rotation axis
-	ry += s->d(-0.1, 0.1);
-	rx += s->d(-0.1, 0.1);
-
-	// trig
-	double siny = std::sin(ry);
-	double cosy = std::cos(ry);
-	double sinx = std::sin(rx);
-	double cosx = std::cos(rx);
-
-	// rotation matrix. 
-	// there's no explicit matrix implementation because there's
-	// only one use case in the domain of this program. i've
-	// implemented it by having a static array of vec3s with
-	// precomputed values that are multiplied by each ray 
-	// direction vector at runtime.
-	// https://en.wikipedia.org/wiki/Rotation_matrix
-	RMy = {
-		math::vec3(cosy, 0.0, siny),
-		math::vec3(0.0, 1.0, 0.0),
-		math::vec3(-siny, 0.0, cosy)
-	};
-
-	RMx = {
-		math::vec3(1.0, 0.0, 0.0),
-		math::vec3(0.0, cosx, -sinx),
-		math::vec3(0.0, sinx, cosx)
-	};
+	updateRotationMatrices();
 }
 
 // raymarch
@@ -285,9 +286,9 @@ math::vec3 renderer::render(double y, double x) {
 		//
 		// scaling / grading
 		//
-		double ff = std::exp(-0.01 * fdist * fdist);
-		colorAccumulated *= ff;
-		colorAccumulated += math::vec3(0.9, 1.0, 1.0) * (1.0 - ff) *0.05;
+		//double ff = std::exp(-0.01 * fdist * fdist);
+		//colorAccumulated *= ff;
+		//colorAccumulated += math::vec3(0.9, 1.0, 1.0) * (1.0 - ff) *0.05;
 
 		color += math::clamp(colorAccumulated, 0.0, 1.0);
 	}

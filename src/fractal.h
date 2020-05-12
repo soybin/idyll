@@ -27,14 +27,13 @@ private:
 	// fractal's variables. randomly set at runtime. stored at the
 	// seed
 	int iterations;
-	double scale;
 	double rz;
 	double rx;
 	math::vec3 color;
 	math::vec3 shift;
 
-	// this is the list of operations that will be executed
-	// per rendering loop. creating 
+	// this is the array of operations that will be executed
+	// per fractal iteration
 	std::vector<operation> operations;
 
 	// seed pointer

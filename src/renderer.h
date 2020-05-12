@@ -13,15 +13,17 @@ private:
 	int SAMPLES;
 	double SKY_NOISE;
 	math::vec3 cameraPosition;
-	math::vec3 skyColor;
 	math::vec3 lightDirection;
-	math::vec3 lightColor;
+	math::vec3 lightColor;	
+	math::vec3 skyColor;
 	std::vector<math::vec3> RMx;
 	std::vector<math::vec3> RMy;
 
 	// object pointers
 	fractal* f;
 	seed* s;
+
+	void updateRotationMatrices();
 
 	// get ray direction based on screen coordinates and apply
 	// yaw and pitch rotation to it

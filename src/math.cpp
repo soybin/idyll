@@ -107,6 +107,17 @@ namespace math {
 	}
 
 	namespace fold {
+		void sierpinski(vec3& r) {
+			double a = std::min(r.x + r.y, 0.0);
+			double b = std::min(r.x + r.z, 0.0);
+			double c = std::min(r.z + r.y, 0.0);
+			r.x -= a;
+			r.y -= a;
+			r.x -= b;
+			r.z -= b;
+			r.y -= c;
+			r.z -= c;
+		}
 		void menger(vec3& r) {
 			double a = std::min(r.x - r.y, 0.0);
 			r.x -= a;
@@ -143,14 +154,11 @@ namespace math {
 
 	namespace de {
 		double sphere(vec3 point, double size) {
-			//point.x = mod(point.x, 1.0) - 0.5f;
-			//point.y = mod(point.y, 1.0) - 0.5f;
-			//point.z = mod(point.z, 1.0) - 0.5f;
 			return length(point) - size;
 		}
 
-		double box(vec3 p, vec3 b) {
-			vec3 a = absolute(p) - b;	
+		double box(vec3 p, double size) {
+			vec3 a = absolute(p) - 1.0;	
 			return length(vec3(std::max(a.x, 0.0), std::max(a.y, 0.0), std::max(a.z, 0.0))) + std::min(std::max(a.x, std::max(a.y, a.z)), 0.0);
 		}
 	}

@@ -69,6 +69,6 @@ namespace math {
 	// distance estimators
 	namespace de {
 		extern double sphere(vec3 p, double size);
-		extern double box(vec3 p, vec3 s);
+		extern double box(vec3 p, double size);
 	}
 }
