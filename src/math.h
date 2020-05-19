@@ -61,9 +61,9 @@ namespace math {
 
 	// rotations
 	namespace rotation {
-		extern void x(vec3& r, double a);
-		extern void y(vec3& r, double a);
-		extern void z(vec3& r, double a);
+		extern void x(vec3& r, double s, double c);
+		extern void y(vec3& r, double s, double c);
+		extern void z(vec3& r, double s, double c);
 	}
 
 	// distance estimators

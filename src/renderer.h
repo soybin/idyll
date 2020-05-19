@@ -14,7 +14,7 @@ private:
 	double SKY_NOISE;
 	math::vec3 cameraPosition;
 	math::vec3 lightDirection;
-	math::vec3 lightColor;	
+	math::vec3 lightColor;
 	math::vec3 skyColor;
 	std::vector<math::vec3> RMx;
 	std::vector<math::vec3> RMy;
@@ -23,7 +23,9 @@ private:
 	fractal* f;
 	seed* s;
 
-	void updateRotationMatrices();
+	// update rotation matrices so that the ray distance
+	// calculation function works properly
+	void updateRotationMatrix();
 
 	// get ray direction based on screen coordinates and apply
 	// yaw and pitch rotation to it
@@ -33,7 +35,7 @@ private:
 	double march(math::ray r);
 	math::vec3 lambertReflection(math::vec3 normal);
 	math::vec3 pathTrace(math::ray r, int levelsLeft);
-	math::vec3 renderSky(math::ray r, double y, double x);
+	math::vec3 renderSky(double y, double x);
 
 public:
 	renderer(int width, int height, seed* s, fractal* f);

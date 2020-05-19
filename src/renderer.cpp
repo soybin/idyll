@@ -4,12 +4,11 @@
 
 #include <iostream>
 
-const int MAX_STEP = 128;
-const double MAX_DIST = 32.0;
-const double MIN_DIST = 1e-4;
+const double MAX_DIST = 1024.0;
+const double MIN_DIST = 0.0001;
 const double PI = 3.14159265358979;
 
-void renderer::updateRotationMatrices() {
+void renderer::updateRotationMatrix() {
 	// determine camera's rotation so that it always looks
 	// towards the center of the scene regardless of its
 	// position
@@ -108,10 +107,10 @@ math::vec3 renderer::calculateRayDirection(double xcoord, double ycoord) {
 	return math::normalize(a);
 }
 
-math::vec3 renderer::renderSky(math::ray r, double y, double x) {
+math::vec3 renderer::renderSky(double y, double x) {
 	double yy = y / HEIGHT;
 	double xx = x / WIDTH;
-	return (f->gradientTop * yy + f->gradientBottom * (1.0 - yy)) * s->d(SKY_NOISE, 1.0);
+	return (f->gradientTop * yy + f->gradientBottom * (1.0 - yy));
 }
 
 renderer::renderer(int WIDTH, int HEIGHT, seed* s, fractal* f) 	: WIDTH(WIDTH), HEIGHT(HEIGHT), s(s), f(f) {
@@ -127,56 +126,60 @@ renderer::renderer(int WIDTH, int HEIGHT, seed* s, fractal* f) 	: WIDTH(WIDTH), 
 
 	// random positioning of the camera along the surface of a
 	// sphere with a certain radius
-	double radius = 0.0;
-	double dist = s->i(3, 4);
-	for (; f->de(math::vec3(0.0, 0.0, radius)) < dist; ) {
-		++radius;
-	}
-
 	math::vec3 dir(s->d(-1.0, 1.0), s->d(-1.0, 1.0), s->d(-1.0, 1.0));
-	for (double totalDistance = 0.0f;;) {
-		cameraPosition = dir * totalDistance;
-		// change sign of the distance because we are inside the
-		// sphere
-		double dist = -math::de::sphere(cameraPosition, radius);
-		if (dist < MIN_DIST) {
+	dir = math::normalize(dir);
+	for (double radius = 0.0, distance = s->d(2.0, 12.0);; ) {
+		cameraPosition = dir * radius;
+		updateRotationMatrix();
+		++radius;
+		if (f->de(cameraPosition) < distance) continue;
+		bool hit = false;
+		for (int i = 0; i < 256; ++i) {
+			double y = HEIGHT * s->d(0.0, 1.0);
+			double x = WIDTH * s->d(0.0, 1.0);
+			double d = march({cameraPosition, calculateRayDirection(x, y)});
+			if (d != -1.0) {
+				hit = true;
+				break;
+			}
+		}
+		if (hit) {
+			std::cout << "broke" << std::endl;
 			break;
 		}
-		totalDistance += dist;
 	}
-
+	std::cout << "dist: " << math::length(cameraPosition) << std::endl;
 	// determine light direction partially based on camera position
-	lightDirection = cameraPosition + math::vec3(s->d(-2.0, 2.0), s->d(-2.0, 2.0), s->d(-2.0, 2.0));
+	double lv = 2.0;
+	lightDirection = cameraPosition + math::vec3(s->d(-lv, lv), 0.0, s->d(-lv, lv));
 	lightDirection = math::normalize(lightDirection);
-	//lightDirection.y = cameraPosition.y < 0.0 ? 1.0 : -1.0;
-	lightDirection = math::vec3(0.0) - lightDirection;
+	lightDirection.y = cameraPosition.y < 0.0 ? -1.0 : 1.0;
 	
-	// random light color. i promise this looks good
-	lightColor.x = s->d(0.75, 1.25);
+	// random light color
+	lightColor.x = s->d(0.75, 1.0);
 	lightColor.y = s->d(lightColor.x - 0.25, lightColor.x + 0.25);
-	lightColor.z = s->d(lightColor.x - 0.5, lightColor.x + 0.5);
+	lightColor.z = s->d(lightColor.x - 0.25, lightColor.x + 0.5);
+	lightColor = math::normalize(lightColor);
 	
-	// random sky color but still makes sense
-	skyColor.x = s->d(0.75, 1.25);
+	// random sky color 
+	skyColor.x = s->d(0.75, 1.0);
 	skyColor.y = s->d(skyColor.x - 0.125, skyColor.x + 0.125);
-	skyColor.z = s->d(skyColor.x - 0.25, skyColor.x + 0.25);
-
-	updateRotationMatrices();
+	skyColor.z = s->d(skyColor.x - 0.125, skyColor.x + 0.25);
+	skyColor = math::normalize(skyColor);
 }
 
 // raymarch
 double renderer::march(math::ray r) {
-	double res = -1.0;
-	double t = 0.01;
-	for (int i = 0; i < MAX_STEP; ++i) {
+	double t = 0.0001;
+	for (; t < MAX_DIST; ) {
 		double h = f->de(r.origin + r.direction * t);
-		if (h < 0.0001 || t > MAX_DIST) {
+		if (h < MIN_DIST) {
 			break;
 		}
 		t += h;
 	}
-	if (t < MAX_DIST) res = t;
-	return res;
+	if (t < MAX_DIST) return t;
+	return -1.0;
 }
 
 // diffuse reflection without tangent thanks to Edd Biddulph:
@@ -203,7 +206,7 @@ math::vec3 renderer::render(double y, double x) {
   double fov = 2.5;
 	double focusDistance = 1.3;
   double blurAmount = 0.0015;
-	int BOUNCES = 5;
+	int BOUNCES = 3;
 
 	// get ray direction relative to the pixel being rendered
 	// coordinates and rotate it
@@ -232,9 +235,9 @@ math::vec3 renderer::render(double y, double x) {
 			// get distance from fractal marching the ray's direction
 			//
 			double distance = march(r);
-			if (distance < 0.0) {
+			if (distance == -1.0) {
 				if (i == 0) {
-					colorAccumulated += renderSky(r, y, x);
+					colorAccumulated = skyColor * s->d(SKY_NOISE, 1.0);
 				}
 				break;
 			}
@@ -258,23 +261,23 @@ math::vec3 renderer::render(double y, double x) {
 			colorLeft *= f->calculateColor(point) * 0.4;
 
 			//
-			// apply lighting
-			//
-			math::vec3 colorAtPoint(0.0);
 			// directional light
+			//
 			double dl = std::max(0.0, math::dot(lightDirection, normal));
 			double dlShadow = 1.0;
 			if (dl > 0.0) {
-				dlShadow = f->calculateShadow({r.origin + r.direction * 0.0001, lightDirection});
+				dlShadow = f->calculateShadow({r.origin + r.direction * MIN_DIST, lightDirection});
 			}
-			colorAtPoint += lightColor * dl * dlShadow;
-			// sky light
-			colorAtPoint += skyColor * f->calculateShadow({r.origin + r.direction * 0.0001, lambertReflection(normal)});
 
 			//
-			// add to color
+			// sky light
 			//
-			colorAccumulated += colorAtPoint * colorLeft;
+			double skyShadow = f->calculateShadow({r.origin + r.direction * MIN_DIST, lambertReflection(normal)});
+
+			//
+			// add bounce color to sample color
+			//
+			colorAccumulated += colorLeft * (lightColor * dl * dlShadow + skyColor * skyShadow);
 
 			//
 			// bounce ray
@@ -286,10 +289,13 @@ math::vec3 renderer::render(double y, double x) {
 		//
 		// scaling / grading
 		//
-		//double ff = std::exp(-0.01 * fdist * fdist);
-		//colorAccumulated *= ff;
-		//colorAccumulated += math::vec3(0.9, 1.0, 1.0) * (1.0 - ff) *0.05;
+		double ff = std::exp(-0.01 * fdist * fdist);
+		colorAccumulated *= ff;
+		colorAccumulated += math::vec3(0.9, 1.0, 1.0) * (1.0 - ff) *0.05;
 
+		//
+		// add clamped sample color to average color
+		//
 		color += math::clamp(colorAccumulated, 0.0, 1.0);
 	}
 	//get average of paths colors

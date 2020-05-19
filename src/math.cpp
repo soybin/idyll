@@ -132,21 +132,15 @@ namespace math {
 	}
 
 	namespace rotation {
-		void x(vec3& r, double a) {
-			double s = std::sin(a);
-			double c = std::cos(a);
+		void x(vec3& r, double s, double c) {
 			r.y = r.y * c + r.z * s;
 			r.z = r.z * c - r.y * s;
 		}
-		void y(vec3& r, double a) {
-			double s = std::sin(a);
-			double c = std::cos(a);
+		void y(vec3& r, double s, double c) {
 			r.x = r.x * c - r.z * s;
 			r.z = r.z * c + r.x * s;
 		}
-		void z(vec3& r, double a) {
-			double s = std::sin(a);
-			double c = std::cos(a);
+		void z(vec3& r, double s, double c) {
 			r.x = r.x * c + r.y * s;
 			r.y = r.y * c - r.x * s;
 		}

@@ -8,7 +8,8 @@ fractal::fractal(seed* s) : s(s) {
 	//
 	// number of fractal iterations
 	//
-	iterations = s->i(6, 9);
+	iterations = s->i(16, 16);
+	std::cout << "iterations: " << iterations << std::endl;
 
 	//
 	// determine fractal color
@@ -16,6 +17,7 @@ fractal::fractal(seed* s) : s(s) {
 	color.x = s->d(0.0, 1.0);
 	color.y = s->d(0.0, 1.0);
 	color.z = s->d(0.0, 1.0);
+	color = math::normalize(color);
 
 	//
 	// determine color variation bound
@@ -52,36 +54,74 @@ fractal::fractal(seed* s) : s(s) {
 	//
 	// determine shift variation bounds
 	//
-	double sv = s->d(0.0, 0.2);
+	double sv = 1.0;
 
 	//
 	// determine fractal shift variation vector per iteration
 	//
-	shift.x = s->d(-sv, 0.0);
-	shift.y = s->d(-sv, 0.0);
-	shift.z = s->d(-sv, 0.0);
+	shift.x = s->d(-sv, -sv / 32.0);
+	shift.y = s->d(-sv, -sv / 32.0);
+	shift.z = s->d(-sv, -sv / 32.0);
+	std::cout << "shift x: " << shift.x << std::endl;
+	std::cout << "shift y: " << shift.y << std::endl;
+	std::cout << "shift z: " << shift.z << std::endl;
 
-	rx = -0.23;
-	rz = -0.21;
+	double rv = 0.25;
+	zr = s->d(-rv, -rv / 32.0);
+	xr = s->d(-rv, -rv / 32.0);
+	std::cout << "zr: " << zr << std::endl;
+	std::cout << "xr: " << xr << std::endl;
+
+	//
+	// precompute sine and cosine of rotation angles
+	//
+	zrs = std::sin(zr);
+	zrc = std::cos(zr);
+	xrs = std::sin(xr);
+	xrc = std::cos(xr);
+
+	//
+	// determine box distance estimator size
+	//
+	deSize = s->d(0.75, 1.25);
+
+	//
+	// determine shadow softness of the fractal
+	//
+	shadowSoftness = s->d(0.75, 1.0);
 }
 
 fractal::~fractal() {
 }
 
 void fractal::iteratePoint(math::vec3& point) {
+	//
+	// get absolute point position
+	//
 	point = math::absolute(point);
-	math::rotation::z(point, rz);
-	math::fold::sierpinski(point);
-	math::rotation::x(point, rx);
+	//
+	// apply point folds and rotations
+	//
+	math::rotation::x(point, xrs, xrc);
+	math::rotation::z(point, zrs, zrc);
 	math::fold::menger(point);
+	math::rotation::z(point, zrs, zrc);
+	math::rotation::x(point, xrs, xrc);
+	math::fold::sierpinski(point);
+	//
+	// apply fractal shift
+	//
 	point += shift;
 }
 
+//
+// main fractal distance estimator
+//
 double fractal::de(math::vec3 point) {
 	for (int i = 0; i < iterations; ++i) {
 		iteratePoint(point);
 	}
-	return math::de::box(point, 1.0);
+	return math::de::box(point, deSize);
 }
 
 //
@@ -92,22 +132,20 @@ double fractal::de(math::vec3 point) {
 double fractal::calculateShadow(math::ray r) {
 	double res = 1.0;
 	double ph = 1e20;
-	double tmax = 32.0;
-	double t = 0.001;
-	double k = 0.75;
-
+	double tmax = 10.0 * deSize;
+	double t = 0.0001;
 	//
 	// kinda like raymarching the shadow with some fancy modifiers
 	// to make it soft and round
 	//
-	for(int i=0; i<80; i++ ) {
+	for(; t < tmax; ) {
 		double h = de(r.origin + r.direction * t);
-		if (h < 0.0) {
+		if (h < 0.0001) {
 			return 0.0;
 		}
 		double y = h * h / (2.0 * ph);
 		double d = std::sqrt(h * h - y * y);
-		res = std::min(res, k * d / std::max(0.0, t - y));
+		res = std::min(res, shadowSoftness * d / std::max(0.0, t - y));
 		ph = h;
 		t += h;
 	}

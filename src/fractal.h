@@ -8,17 +8,14 @@
 // this structure constitutes the possible operations 
 // applied to each iteration of the fractal
 struct operation {
-	// R -> rotation
-	// S -> shift
-	// F -> fold
-	// mapped to 1, 2, 3
-	int action;
+	// true for rotation, false for fold
+	bool isFold;
 
-	// X, Y or Z in the case of rotation and shift
-	// mapped to 1, 2, 3
-	int specification;
+	// X, Y or Z in the case of rotation
+	// M, S, P for Menger and Plane folds
+	char specification;
 
-	// whatever value to apply
+	// in case of a rotation
 	double value;
 };
 
@@ -27,8 +24,14 @@ private:
 	// fractal's variables. randomly set at runtime. stored at the
 	// seed
 	int iterations;
-	double rz;
-	double rx;
+	double zr;
+	double xr;
+	double zrs;
+	double zrc;
+	double xrs;
+	double xrc;
+	double deSize;
+	double shadowSoftness;
 	math::vec3 color;
 	math::vec3 shift;
 
