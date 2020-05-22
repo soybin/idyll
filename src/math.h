@@ -41,7 +41,11 @@ namespace math {
 		vec3 direction;
 	};
 
-	// basic vector arithmetic
+	//
+	// vector arithmetic functions, based off GLSL4 reference
+	// by khronos:
+	// https://www.khronos.org/registry/OpenGL-Refpages/gl4/
+	//
 	extern double length(vec3 v);
 	extern double dot(vec3 v1, vec3 v2);
 	extern double clamp(double v, double rangeMin, double rangeMax);
@@ -51,6 +55,7 @@ namespace math {
 	extern vec3 cross(vec3 v1, vec3 v2);
 	extern vec3 mix(vec3 rangeMin, vec3 rangeMax, double v);
 	extern vec3 clamp(vec3 v, double rangeMin, double rangeMax);
+	extern vec3 reflect(vec3 i, vec3 n);
 
 	// folds
 	namespace fold {

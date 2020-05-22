@@ -3,6 +3,7 @@
 
 namespace config {
 	int getInt(std::string name) {
+		// file handle
 		std::ifstream file("config.txt");
 
 		// create file in case it doesn't exist
@@ -41,19 +42,79 @@ namespace config {
 		return getInt(name);
 	}
 
+	void setSeed(std::string s) {
+		std::ifstream file("config.txt");
+		std::ofstream temp("temp.txt");
+		for (std::string line; std::getline(file, line); ) {
+			size_t found = line.find("lastSeed");
+			if (found != std::string::npos) {
+				temp << ("lastSeed " + s + '\n');
+				continue;
+			}
+			temp << line << '\n';
+		}
+		std::remove("config.txt");
+		std::rename("temp.txt", "config.txt");
+		std::cout << "[+] Successfully stored seed at 'config.txt' file.\n";
+	}
+
+	std::string getSeed() {
+		std::ifstream file("config.txt");
+		for (std::string line; std::getline(file, line); ) {
+			int n = line.size();
+			if (n < 4) continue;
+			if (line.substr(0, 4) != "seed") continue;
+			if (line.find("~") != std::string::npos) {
+				return "-1";
+			}
+			if (line.size() < 64) break;
+			return line.substr(5);
+		}
+		std::cout << "[-] Couldn't find 'seed' variable in 'config.txt' file.\n";
+		reset();
+		return getSeed();
+	}
+
 	void reset() {
 		std::cout << "[+] resetting config.txt file to standard values.\n";
 		std::ofstream file("config.txt");
-		file << "# output image file variables #\n";
-		file << "# you may modify these values #\n";
+		file << "#======== o u t p u t    f i l e ========#\n";
+		file << "\n";
+		file << "# resolution in pixels #\n";
 		file << "width 1920\n";
 		file << "height 1080\n";
 		file << "\n";
+		file << "# set to one to get a png file #\n";
+		file << "# set to zero to get a ppm file #\n";
+		file << "png 1\n";
+		file << "\n";
+		file << "#======== c p u ========#\n";
+		file << "\n";
+		file << "# idyll is multithreaded by default #\n";
+		file << "# you can adjust the number of threads here #\n";
+		file << "threads 8\n";
+		file << "\n";
+		file << "#======== r e n d e r i n g ========#\n";
+		file << "\n";
 		file << "# number of samples #\n";
-		file << "# more samples means less noise #\n";
+		file << "# more samples equals less noise #\n";
 		file << "samples 4\n";
-		file << "# multithread instructions #\n";
-		file << "threads 100\n";
+		file << "\n";
+		file << "# camera field of view in degrees #\n";
+		file << "fov 45\n";
+		file << "\n";
+		file << "# surface bounces per path traced ray #\n";
+		file << "# this value increases quality and computation time #\n";
+		file << "bounces 3\n";
+		file << "\n";
+		file << "#======== s e e d ========#\n";
+		file << "\n";
+		file << "# this is the seed for the last rendered fractal #\n";
+		file << "lastSeed ~\n";
+		file << "\n";
+		file << "# leave this blank if you desire to get a random seed #\n";
+		file << "# otherwise, you can input a seed of your choice #\n";
+		file << "seed ~\n";
 		file << "\n";
 	}
 }

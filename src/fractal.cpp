@@ -6,41 +6,30 @@
 fractal::fractal(seed* s) : s(s) {
 
 	//
-	// number of fractal iterations
+	// get number of fractal iterations
 	//
-	iterations = s->i(16, 16);
-	std::cout << "iterations: " << iterations << std::endl;
+	iterations = s->values["iterations"];
 
 	//
-	// determine fractal color
+	// get fractal color
 	//
-	color.x = s->d(0.0, 1.0);
-	color.y = s->d(0.0, 1.0);
-	color.z = s->d(0.0, 1.0);
-	color = math::normalize(color);
+	color.x = s->values["xcolor"];
+	color.y = s->values["ycolor"];
+	color.z = s->values["zcolor"];
 
 	//
-	// determine color variation bound
-	//
-	double cv = s->d(0.0, 1.0);
-
-	//
-	// determine top sky gradient color variation
+	// get top sky gradient color
 	// 
-	gradientTop = math::vec3(s->d(0.0, cv)) + color;
-	gradientTop.x += s->d(-cv, cv);
-	gradientTop.y += s->d(-cv, cv);
-	gradientTop.z += s->d(-cv, cv);
-	gradientTop = math::normalize(gradientTop);
+	gradientTop.x = s->values["xgradientTop"];
+	gradientTop.y = s->values["ygradientTop"];
+	gradientTop.z = s->values["zgradientTop"];
 
 	//
-	// determine bottom sky gradient color
+	// get bottom sky gradient color
 	//
-	gradientBottom = math::vec3(s->d(0.0, cv / 2.0)) + color;
-	gradientBottom.x += s->d(-cv, cv);
-	gradientBottom.y += s->d(-cv, cv);
-	gradientBottom.z += s->d(-cv, cv);
-	gradientBottom = math::normalize(gradientBottom);
+	gradientBottom.x = s->values["xgradientBottom"];
+	gradientBottom.y = s->values["ygradientBottom"];
+	gradientBottom.z = s->values["zgradientBottom"];
 
 	//
 	// randomly change gradient color positions
@@ -52,25 +41,17 @@ fractal::fractal(seed* s) : s(s) {
 	}
 
 	//
-	// determine shift variation bounds
-	//
-	double sv = 1.0;
-
-	//
 	// determine fractal shift variation vector per iteration
 	//
-	shift.x = s->d(-sv, -sv / 32.0);
-	shift.y = s->d(-sv, -sv / 32.0);
-	shift.z = s->d(-sv, -sv / 32.0);
-	std::cout << "shift x: " << shift.x << std::endl;
-	std::cout << "shift y: " << shift.y << std::endl;
-	std::cout << "shift z: " << shift.z << std::endl;
-
-	double rv = 0.25;
-	zr = s->d(-rv, -rv / 32.0);
-	xr = s->d(-rv, -rv / 32.0);
-	std::cout << "zr: " << zr << std::endl;
-	std::cout << "xr: " << xr << std::endl;
+	shift.x = s->values["xshift"];
+	shift.y = s->values["yshift"];
+	shift.z = s->values["zshift"];
+	
+	//
+	// determine fractal rotation per iteration
+	//
+	xr = s->values["xrotation"];
+	zr = s->values["zrotation"];
 
 	//
 	// precompute sine and cosine of rotation angles
@@ -83,12 +64,12 @@ fractal::fractal(seed* s) : s(s) {
 	//
 	// determine box distance estimator size
 	//
-	deSize = s->d(0.75, 1.25);
+	deScale = s->values["deScale"];
 
 	//
 	// determine shadow softness of the fractal
 	//
-	shadowSoftness = s->d(0.75, 1.0);
+	shadowSoftness = s->values["shadowSoftness"];
 }
 
 fractal::~fractal() {
@@ -121,18 +102,13 @@ double fractal::de(math::vec3 point) {
 	for (int i = 0; i < iterations; ++i) {
 		iteratePoint(point);
 	}
-	return math::de::box(point, deSize);
+	return math::de::box(point, deScale);
 }
 
-//
-// shadowing technique. 
-// explained in detal at inigo quilez's blog:
-// https://iquilezles.org/www/articles/rmshadows/rmshadows.htm
-//
 double fractal::calculateShadow(math::ray r) {
 	double res = 1.0;
 	double ph = 1e20;
-	double tmax = 10.0 * deSize;
+	double tmax = 12.0;
 	double t = 0.0001;
 	//
 	// kinda like raymarching the shadow with some fancy modifiers
@@ -140,7 +116,7 @@ double fractal::calculateShadow(math::ray r) {
 	//
 	for(; t < tmax; ) {
 		double h = de(r.origin + r.direction * t);
-		if (h < 0.0001) {
+		if (h < 0.001) {
 			return 0.0;
 		}
 		double y = h * h / (2.0 * ph);
@@ -153,31 +129,18 @@ double fractal::calculateShadow(math::ray r) {
 	return res;
 }
 
-//
-// orbit trap coloring method
-//
 math::vec3 fractal::calculateColor(math::vec3 point) {
 	math::vec3 orbit(0.0);
 	for (int i = 0; i < iterations; ++i) {
-		// do the fractal transformation of the point
 		iteratePoint(point);
-		// orbit trap coloring
 		math::vec3 pc = point * color;
-		orbit = math::vec3(std::max(orbit.x, pc.x), std::max(orbit.y, pc.y), std::max(orbit.z, pc.z));
+		orbit = math::vec3(std::max(pc.x, orbit.x), std::max(pc.y, orbit.y), std::max(pc.z, orbit.z));
 	}
 	return orbit;
 }
 
-//
-// tetrahedron technique used to calculate normals instead of
-// the classical forward and central differences technique.
-// the main difference is the amount of calls to the DE function
-// is being reduced from 6 to only 4. and that's a lot.
-// explained in detal at inigo quilez blog:
-// https://www.iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
-//
 math::vec3 fractal::calculateNormal(math::vec3 point) {
-	double e = 0.0001;
+	double e = 0.00001;
 	math::vec3 xyy(1.0, -1.0, -1.0);
 	math::vec3 yyx(-1.0, -1.0, 1.0);
 	math::vec3 yxy(-1.0, 1.0, -1.0);

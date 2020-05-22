@@ -71,7 +71,6 @@ namespace math {
 		z /= v;
 	}
 
-	//vector arithmetic functions
 	double length(vec3 v) {
 		return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 	}
@@ -86,7 +85,8 @@ namespace math {
     return t * t * (3.0 - 2.0 * t);
 	}
 	vec3 normalize(vec3 v) {
-		return v / length(v);
+		double len = length(v);
+		return vec3(v.x / len, v.y / len, v.z / len);
 	}
 	vec3 absolute(vec3 v) {
 		return vec3(std::abs(v.x), std::abs(v.y), std::abs(v.z));
@@ -104,6 +104,9 @@ namespace math {
 		v.y = std::min(std::max(v.y, rangeMin), rangeMax);
 		v.z = std::min(std::max(v.z, rangeMin), rangeMax);
 		return v;
+	}
+	vec3 reflect(vec3 incident, vec3 normal) {
+		return incident - normal * dot(normal, incident) * 2.0;
 	}
 
 	namespace fold {

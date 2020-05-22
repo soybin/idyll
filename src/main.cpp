@@ -8,6 +8,9 @@
 #include <iostream>
 #include <thread>
 
+// png lib by Nayuki (https://www.nayuki.io/page/tiny-png-output)
+#include "TinyPngOut.hpp"
+
 // this function wil be instantiated in multiple threads at runtime. it iterates
 // through a specified range in a 2d matrix and renders every pixel in the range.
 // then it stores the pixel value at the "image" 2d matrix
@@ -22,24 +25,37 @@ void renderRange(int startRow, int endRow, int startCol, int endCol, int width, 
 }
 
 int main(int argc, char* argv[]) {
-	// coordinates
+	// base coordinates
 	double y = 0.5, x = 0.5;
-
-	// gui
-	gui::setup();
 
 	// get config info
 	int width = config::getInt("width");
 	int height = config::getInt("height");
 	int threadCount = config::getInt("threads");
 
-	// pointer to seed object
-	seed* s = new seed();
+	// pointer to seed object and parsing user input
+	seed* s;
+	std::string seedStr = config::getSeed();
+	if (seedStr == "-1") {
+		s = new seed();
+		// write current seed to config file
+		config::setSeed(s->buildSeed());
+	} else {
+		s = new seed(seedStr);
+		if (!s->seedParsingSuccessful) {
+			std::cout << "[-] Input seed not valid. Exiting.\n";
+			delete s;
+			return 0;
+		}
+	}
+
+	// init gui
+	gui::setup();
 
 	// pointer to fractal object
 	fractal* f = new fractal(s);
 
-	// pointer to fractal rion
+	// pointer to renderer object
 	renderer* r = new renderer(width, height, s, f);
 
 	// pointer to 2d matrix of pixels. it'll be accessible
@@ -118,21 +134,53 @@ int main(int argc, char* argv[]) {
 		thread.join();
 	}
 
-	// write to output file
-	std::ofstream out("out.ppm");
-	out << "P3\n" << width << ' ' << height << ' ' << 255 << '\n';
-	for (int i = 0; i < height; ++i) {
-		for (int j = 0; j < width; ++j) {
-			math::vec3 pixel = (*image)[i][j];
-			out << (int)pixel.x << ' ' << (int)pixel.y << ' ' << (int)pixel.z << '\n';
-		}
-	}
-
-	// free memory
+	//
+	// free heap allocated memory
+	//
 	delete s;
 	delete f;
 	delete r;
-	delete image;
 
-	return 0;
+	if (config::getInt("png")) {
+		//
+		// convert to portable network graphics format.
+		// all credits for this functionality go to Nayuki for writing
+		// the Tiny PNG Output library:
+		// https://www.nayuki.io/page/tiny-png-output
+		//
+		try {
+			std::ofstream out("render.png", std::ios::binary);
+			TinyPngOut pngout(static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height), out);
+			std::vector<std::uint8_t> line(static_cast<size_t>(width) * 3);
+			for (int y = 0; y < height; ++y) {
+				for (int x = 0; x < width; ++x) {
+					math::vec3 pixel = (*image)[y][x];
+					line[x * 3 + 0] = static_cast<uint8_t>(pixel.x);
+					line[x * 3 + 1] = static_cast<uint8_t>(pixel.y);
+					line[x * 3 + 2] = static_cast<uint8_t>(pixel.z);
+				}
+				pngout.write(line.data(), static_cast<size_t>(width));
+			}
+			delete image;
+			return EXIT_SUCCESS;
+		} catch (const char* message) {
+			std::cerr << message << std::endl;
+			delete image;
+			return EXIT_FAILURE;
+		}
+	} else {
+		//
+		// write image data to ppm file
+		//
+		std::ofstream out("render.ppm");
+		out << "P3\n" << width << ' ' << height << ' ' << 255 << '\n';
+		for (int i = 0; i < height; ++i) {
+			for (int j = 0; j < width; ++j) {
+				math::vec3 pixel = (*image)[i][j];
+				out << (int)pixel.x << ' ' << (int)pixel.y << ' ' << (int)pixel.z << '\n';
+			}
+		}
+		delete image;
+		return 0;
+	}
 }

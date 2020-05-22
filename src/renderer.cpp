@@ -5,7 +5,7 @@
 #include <iostream>
 
 const double MAX_DIST = 1024.0;
-const double MIN_DIST = 0.0001;
+const double MIN_DIST = 1e-5;
 const double PI = 3.14159265358979;
 
 void renderer::updateRotationMatrix() {
@@ -115,26 +115,40 @@ math::vec3 renderer::renderSky(double y, double x) {
 
 renderer::renderer(int WIDTH, int HEIGHT, seed* s, fractal* f) 	: WIDTH(WIDTH), HEIGHT(HEIGHT), s(s), f(f) {
 
-	// random field of view
-	FOV = s->i(45, 60);
+	// get field of view from config file
+	FOV = config::getInt("fov");
 
 	// get sample value from config file
 	SAMPLES = config::getInt("samples");
 
+	// get surface bounces per ray
+	BOUNCES = config::getInt("bounces");
+
 	// set lower bound for randomness in sky noise
-	SKY_NOISE = std::min(std::max(0.8, SAMPLES / 10.0), 1.0);
+	SKY_NOISE = std::min(std::max(0.8, SAMPLES / 8.0), 1.0);
+
+	// get random glossiness chance and glossiness amount from the
+	// region's seed.
+	// this represents the probability for a ray to be reflected
+	// as glossy instead of as diffuse, and with which intensity
+	// it will do so
+	GLOSSINESS_CHANCE = s->values["GLOSSINESS_CHANCE"];
+	GLOSSINESS_AMOUNT = s->values["GLOSSINESS_AMOUNT"];
 
 	// random positioning of the camera along the surface of a
 	// sphere with a certain radius
-	math::vec3 dir(s->d(-1.0, 1.0), s->d(-1.0, 1.0), s->d(-1.0, 1.0));
-	dir = math::normalize(dir);
-	for (double radius = 0.0, distance = s->d(2.0, 12.0);; ) {
+	math::vec3 dir;
+	dir.x = s->values["xcameraDirection"];
+	dir.y = s->values["ycameraDirection"];
+	dir.z = s->values["zcameraDirection"];
+	double distance = s->values["cameraDistance"];
+	for (double radius = 0.0; radius < MAX_DIST; ) {
 		cameraPosition = dir * radius;
 		updateRotationMatrix();
 		++radius;
 		if (f->de(cameraPosition) < distance) continue;
 		bool hit = false;
-		for (int i = 0; i < 256; ++i) {
+		for (int i = 0; i < 64; ++i) {
 			double y = HEIGHT * s->d(0.0, 1.0);
 			double x = WIDTH * s->d(0.0, 1.0);
 			double d = march({cameraPosition, calculateRayDirection(x, y)});
@@ -144,33 +158,29 @@ renderer::renderer(int WIDTH, int HEIGHT, seed* s, fractal* f) 	: WIDTH(WIDTH), 
 			}
 		}
 		if (hit) {
-			std::cout << "broke" << std::endl;
 			break;
 		}
 	}
-	std::cout << "dist: " << math::length(cameraPosition) << std::endl;
-	// determine light direction partially based on camera position
-	double lv = 2.0;
-	lightDirection = cameraPosition + math::vec3(s->d(-lv, lv), 0.0, s->d(-lv, lv));
-	lightDirection = math::normalize(lightDirection);
-	lightDirection.y = cameraPosition.y < 0.0 ? -1.0 : 1.0;
+
+	// get directional light direction
+	lightDirection.x = s->values["xlightDirection"];
+	lightDirection.y = s->values["ylightDirection"];
+	lightDirection.z = s->values["zlightDirection"];
+
+	// get directional light color
+	lightColor.x = s->values["xlightColor"];
+	lightColor.y = s->values["ylightColor"];
+	lightColor.z = s->values["zlightColor"];
 	
-	// random light color
-	lightColor.x = s->d(0.75, 1.0);
-	lightColor.y = s->d(lightColor.x - 0.25, lightColor.x + 0.25);
-	lightColor.z = s->d(lightColor.x - 0.25, lightColor.x + 0.5);
-	lightColor = math::normalize(lightColor);
-	
-	// random sky color 
-	skyColor.x = s->d(0.75, 1.0);
-	skyColor.y = s->d(skyColor.x - 0.125, skyColor.x + 0.125);
-	skyColor.z = s->d(skyColor.x - 0.125, skyColor.x + 0.25);
-	skyColor = math::normalize(skyColor);
+	// get sky color
+	skyColor.x = s->values["xskyColor"];
+	skyColor.y = s->values["yskyColor"];
+	skyColor.z = s->values["zskyColor"];
 }
 
 // raymarch
 double renderer::march(math::ray r) {
-	double t = 0.0001;
+	double t = MIN_DIST;
 	for (; t < MAX_DIST; ) {
 		double h = f->de(r.origin + r.direction * t);
 		if (h < MIN_DIST) {
@@ -182,18 +192,32 @@ double renderer::march(math::ray r) {
 	return -1.0;
 }
 
-// diffuse reflection without tangent thanks to Edd Biddulph:
-// http://www.amietia.com/lambertnotangent.html
-math::vec3 renderer::lambertReflection(math::vec3 normal) {
-	double a = s->d(0.0, 1.0);
-	double b = s->d(0.0, 1.0);
+math::vec3 renderer::brdf(math::vec3 direction, math::vec3 normal) {
+	if (s->d(0.0, 1.0) > GLOSSINESS_CHANCE) {
+		//
+		// diffuse reflection without tangent thanks to Edd 
+		// Biddulph:
+		// http://www.amietia.com/lambertnotangent.html
+		//
+		double a = s->d(0.0, 1.0);
+		double b = s->d(0.0, 1.0);
+		// not an arbitrary number, it's pi * 2
+		double theta = 6.283185 * a;
+		b = 2.0 * b - 1.0;
+		double bsqrt = std::sqrt(1.0 - b * b);
+		math::vec3 point(bsqrt * cos(theta), bsqrt * sin(theta), b);
+		return math::normalize(normal + point);
+	} else {
+		//
+		// glossy reflection
+		//
+		math::vec3 reflection = math::reflect(direction, normal);
+		double a = PI;
+		double b = 2 * PI;
+		math::vec3 uniformVector(std::sin(b) * std::sin(a), std::cos(b) * std::sin(a), std::cos(a));
+		return math::normalize(reflection + uniformVector) * GLOSSINESS_AMOUNT;
+	}
 
-	// not an arbitrary number, it's pi * 2
-	double theta = 6.283185 * a;
-	b = 2.0 * b - 1.0;
-	double bsqrt = std::sqrt(1.0 - b * b);
-	math::vec3 point(bsqrt * cos(theta), bsqrt * sin(theta), b);
-	return math::normalize(normal + point);
 }
 
 renderer::~renderer() {
@@ -206,7 +230,6 @@ math::vec3 renderer::render(double y, double x) {
   double fov = 2.5;
 	double focusDistance = 1.3;
   double blurAmount = 0.0015;
-	int BOUNCES = 3;
 
 	// get ray direction relative to the pixel being rendered
 	// coordinates and rotate it
@@ -237,7 +260,7 @@ math::vec3 renderer::render(double y, double x) {
 			double distance = march(r);
 			if (distance == -1.0) {
 				if (i == 0) {
-					colorAccumulated = skyColor * s->d(SKY_NOISE, 1.0);
+					colorAccumulated = renderSky(y, x);
 				}
 				break;
 			}
@@ -258,8 +281,9 @@ math::vec3 renderer::render(double y, double x) {
 			//
 			// get fractal surface color
 			//
-			colorLeft *= f->calculateColor(point) * 0.4;
+			math::vec3 colorAtPoint = f->calculateColor(point);
 
+			math::vec3 colorLighting(0.0);
 			//
 			// directional light
 			//
@@ -268,22 +292,25 @@ math::vec3 renderer::render(double y, double x) {
 			if (dl > 0.0) {
 				dlShadow = f->calculateShadow({r.origin + r.direction * MIN_DIST, lightDirection});
 			}
+			colorLighting += lightColor * dl * dlShadow;
 
 			//
 			// sky light
 			//
-			double skyShadow = f->calculateShadow({r.origin + r.direction * MIN_DIST, lambertReflection(normal)});
+			double skyShadow = f->calculateShadow({r.origin + r.direction * MIN_DIST, brdf(r.direction, normal)});
+			colorLighting += skyColor * skyShadow;
 
 			//
 			// add bounce color to sample color
 			//
-			colorAccumulated += colorLeft * (lightColor * dl * dlShadow + skyColor * skyShadow);
+			colorLeft *= colorAtPoint;
+			colorAccumulated += colorLeft * colorLighting;
 
 			//
 			// bounce ray
 			//
 			r.origin = point;
-			r.direction = lambertReflection(normal);
+			r.direction = brdf(r.direction, normal);
 		}
 
 		//
