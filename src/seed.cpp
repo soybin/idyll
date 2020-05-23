@@ -50,6 +50,8 @@ seed::seed() : rng(dev()) {
 	//                                                    //
 	// number of iterations
 	values["iterations"] = i(16, 20);
+	// color range
+	values["colorRange"] = i(1, 3);
 	// fractal base color
 	math::vec3 color;
 	color.x = d(0.0, 1.0);
@@ -81,8 +83,6 @@ seed::seed() : rng(dev()) {
 	values["xrotation"] = rotation.x;
 	values["yrotation"] = rotation.y / 16.0;
 	values["zrotation"] = rotation.z;
-	// distancce estimator scale
-	values["deScale"] = d(1.0, 1.0);
 	// shadow softess
 	values["shadowSoftness"] = d(0.5, 1.0);
 }
@@ -164,51 +164,54 @@ seed::seed(std::string s) {
 					values["iterations"] = value;
 					break;
 				case 16:
-					values["xcolor"] = value;
+					values["colorRange"] = value;
 					break;
 				case 17:
-					values["ycolor"] = value;
+					values["xcolor"] = value;
 					break;
 				case 18:
-					values["zcolor"] = value;
+					values["ycolor"] = value;
 					break;
 				case 19:
-					values["xgradientTop"] = value;
+					values["zcolor"] = value;
 					break;
 				case 20:
-					values["ygradientTop"] = value;
+					values["xgradientTop"] = value;
 					break;
 				case 21:
-					values["zgradientTop"] = value;
+					values["ygradientTop"] = value;
 					break;
 				case 22:
-					values["xgradientBottom"] = value;
+					values["zgradientTop"] = value;
 					break;
 				case 23:
-					values["ygradientBottom"] = value;
+					values["xgradientBottom"] = value;
 					break;
 				case 24:
-					values["zgradientBottom"] = value;
+					values["ygradientBottom"] = value;
 					break;
 				case 25:
-					values["xshift"] = value;
+					values["zgradientBottom"] = value;
 					break;
 				case 26:
-					values["yshift"] = value;
+					values["xshift"] = value;
 					break;
 				case 27:
-					values["zshift"] = value;
+					values["yshift"] = value;
 					break;
 				case 28:
-					values["xrotation"] = value;
+					values["zshift"] = value;
 					break;
 				case 29:
-					values["yrotation"] = value;
+					values["xrotation"] = value;
 					break;
 				case 30:
-					values["zrotation"] = value;
+					values["yrotation"] = value;
 					break;
 				case 31:
+					values["zrotation"] = value;
+					break;
+				case 32:
 					values["shadowSoftness"] = value;
 			}
 			++arg;
@@ -258,6 +261,8 @@ std::string seed::buildSeed() {
 	s += std::to_string(values["zskyColor"]);
 	s += separationOps[i(0, m)];
 	s += std::to_string(values["iterations"]);
+	s += separationOps[i(0, m)];
+	s += std::to_string(values["colorRange"]);
 	s += separationOps[i(0, m)];
 	s += std::to_string(values["xcolor"]);
 	s += separationOps[i(0, m)];

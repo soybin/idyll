@@ -9,13 +9,13 @@ class fractal {
 	private:
 		// fractal's variables. randomly set at runtime
 		int iterations;
+		int colorRange;
 		double zr;
 		double xr;
 		double zrs;
 		double zrc;
 		double xrs;
 		double xrc;
-		double deScale;
 		double shadowSoftness;
 		math::vec3 color;
 		math::vec3 shift;
