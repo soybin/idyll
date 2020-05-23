@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <iostream>
 #include "seed.h"
 
 // mersennes' twister prng algo initialized with random device
@@ -21,17 +20,17 @@ seed::seed() : rng(dev()) {
 	values["zcameraDirection"] = cameraDirection.z;
 	// how far away should the camera be from the surface of the
 	// distance estimator
-	values["cameraDistance"] = i(3, 12);
+	values["cameraDistance"] = i(3, 9);
 	// directional light direction
-	math::vec3 lightDirection = math::normalize(math::vec3(0.0) - cameraDirection + vec3(-0.1, 0.1));
+	math::vec3 lightDirection = math::normalize(cameraDirection + vec3(-0.01, 0.01));
 	values["xlightDirection"] = lightDirection.x;
 	values["ylightDirection"] = lightDirection.y;
 	values["zlightDirection"] = lightDirection.z;
 	// directional light color
 	math::vec3 lightColor;
-	lightColor.x = d(0.75, 1.0);
-	lightColor.y = d(lightColor.x - 0.25, lightColor.x + 0.25);
-	lightColor.z = d(lightColor.x - 0.25, lightColor.x + 0.5);
+	lightColor.x = d(0.9, 1.1);
+	lightColor.y = d(lightColor.x - 0.1, lightColor.x + 0.1);
+	lightColor.z = d(lightColor.x - 0.2, lightColor.x + 0.2);
 	lightColor = math::normalize(lightColor);
 	values["xlightColor"] = lightColor.x;
 	values["ylightColor"] = lightColor.y;
@@ -52,10 +51,14 @@ seed::seed() : rng(dev()) {
 	// number of iterations
 	values["iterations"] = i(16, 20);
 	// fractal base color
-	math::vec3 normalizedColor = math::normalize(vec3(0, 255));
-	values["xcolor"] = normalizedColor.x;
-	values["ycolor"] = normalizedColor.y;
-	values["zcolor"] = normalizedColor.z;
+	math::vec3 color;
+	color.x = d(0.0, 1.0);
+	color.z = d(0.0, 1.0 - color.x);
+	color.y = d(0.0, 1.0 - color.x - color.z);
+	color = math::normalize(math::vec3(0.4) + color);
+	values["xcolor"] = color.x;
+	values["ycolor"] = color.y;
+	values["zcolor"] = color.z;
 	// top sky gradient color
 	math::vec3 normalizedGradientTop = math::normalize(vec3(0, 255));
 	values["xgradientTop"] = normalizedGradientTop.x;
@@ -67,16 +70,16 @@ seed::seed() : rng(dev()) {
 	values["ygradientBottom"] = normalizedGradientBottom.y;
 	values["zgradientBottom"] = normalizedGradientBottom.z;
 	// fractal point space shift per iteration
-	double maxShift = 0.8;
+	double maxShift = 0.6;
 	math::vec3 shift = vec3(-maxShift, -maxShift / 32.0);
 	values["xshift"] = shift.x;
-	values["yshift"] = shift.y;
+	values["yshift"] = shift.y / 16.0;
 	values["zshift"] = shift.z;	
 	// fractal point space rotation per iteration
 	double maxRotation = 0.2;
 	math::vec3 rotation = vec3(-maxRotation, -maxRotation / 32.0);
 	values["xrotation"] = rotation.x;
-	values["yrotation"] = rotation.y;
+	values["yrotation"] = rotation.y / 16.0;
 	values["zrotation"] = rotation.z;
 	// distancce estimator scale
 	values["deScale"] = d(1.0, 1.0);
@@ -91,7 +94,6 @@ seed::seed(std::string s) {
 	std::vector<char> separationOps = { '!', '@', '#', '$', '%', '^', '&', '*' };
 	int n = s.size();
 	std::string str = "";
-	std::cout << s << std::endl;
 	for (int i = 0, arg = 0; i < n; ++i) {
 		char c = s[i];
 		bool end = false;

@@ -131,7 +131,7 @@ double fractal::calculateShadow(math::ray r) {
 
 math::vec3 fractal::calculateColor(math::vec3 point) {
 	math::vec3 orbit(0.0);
-	for (int i = 0; i < iterations; ++i) {
+	for (int i = 0; i < 1; ++i) {
 		iteratePoint(point);
 		math::vec3 pc = point * color;
 		orbit = math::vec3(std::max(pc.x, orbit.x), std::max(pc.y, orbit.y), std::max(pc.z, orbit.z));

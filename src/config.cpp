@@ -81,8 +81,8 @@ namespace config {
 		file << "#======== o u t p u t    f i l e ========#\n";
 		file << "\n";
 		file << "# resolution in pixels #\n";
-		file << "width 1920\n";
-		file << "height 1080\n";
+		file << "width 1280\n";
+		file << "height 720\n";
 		file << "\n";
 		file << "# set to one to get a png file #\n";
 		file << "# set to zero to get a ppm file #\n";
