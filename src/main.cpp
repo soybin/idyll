@@ -33,13 +33,19 @@ int main(int argc, char* argv[]) {
 	int height = config::getInt("height");
 	int threadCount = config::getInt("threads");
 
+	// init gui
+	gui::setup();
+
 	// pointer to seed object and parsing user input
 	seed* s;
 	std::string seedStr = config::getSeed();
 	if (seedStr == "-1") {
 		s = new seed();
 		// write current seed to config file
-		config::setSeed(s->buildSeed());
+		std::string generatedSeed = s->buildSeed();
+		std::cout << "[+] Successfully generated seed:\n";
+		std::cout << generatedSeed << '\n';
+		config::setSeed(generatedSeed);
 	} else {
 		s = new seed(seedStr);
 		if (!s->seedParsingSuccessful) {
@@ -48,9 +54,6 @@ int main(int argc, char* argv[]) {
 			return 0;
 		}
 	}
-
-	// init gui
-	gui::setup();
 
 	// pointer to fractal object
 	fractal* f = new fractal(s);
@@ -118,6 +121,11 @@ int main(int argc, char* argv[]) {
 		threads.push_back(std::thread{renderRange, lastY, height, lastX, width, width, height, chunk, r, image});
 	}
 
+	//
+	// inform that everything's alright
+	//
+	std::cout << "[+] Rendering seeded region:\n";
+
 	// render the first chunk in the main application thread
 	// so that it can update the gui progress bar
 	int count = 0;
@@ -141,6 +149,18 @@ int main(int argc, char* argv[]) {
 	delete f;
 	delete r;
 
+	//
+	// define output file's path
+	//
+	int pathCount = 0;
+	std::string path;
+	for (bool ok = true; ok & 1; ++pathCount) {
+		path = "render" + std::to_string(pathCount);
+		std::ifstream pngFile(path + ".png");
+		std::ifstream ppmFile(path + ".ppm");
+		ok = pngFile.good() || ppmFile.good(); 
+	}
+
 	if (config::getInt("png")) {
 		//
 		// convert to portable network graphics format.
@@ -149,7 +169,7 @@ int main(int argc, char* argv[]) {
 		// https://www.nayuki.io/page/tiny-png-output
 		//
 		try {
-			std::ofstream out("render.png", std::ios::binary);
+			std::ofstream out(path + ".png", std::ios::binary);
 			TinyPngOut pngout(static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height), out);
 			std::vector<std::uint8_t> line(static_cast<size_t>(width) * 3);
 			for (int y = 0; y < height; ++y) {
@@ -161,18 +181,15 @@ int main(int argc, char* argv[]) {
 				}
 				pngout.write(line.data(), static_cast<size_t>(width));
 			}
-			delete image;
-			return EXIT_SUCCESS;
+			std::cout << "[+] Successfully rendered region to " << path << ".png\n\n";	
 		} catch (const char* message) {
-			std::cerr << message << std::endl;
-			delete image;
-			return EXIT_FAILURE;
+			std::cout << message << std::endl;
 		}
 	} else {
 		//
 		// write image data to ppm file
 		//
-		std::ofstream out("render.ppm");
+		std::ofstream out(path + ".ppm");
 		out << "P3\n" << width << ' ' << height << ' ' << 255 << '\n';
 		for (int i = 0; i < height; ++i) {
 			for (int j = 0; j < width; ++j) {
@@ -180,7 +197,16 @@ int main(int argc, char* argv[]) {
 				out << (int)pixel.x << ' ' << (int)pixel.y << ' ' << (int)pixel.z << '\n';
 			}
 		}
-		delete image;
+		std::cout << "[+] Successfully rendered region to " << path << ".ppm\n\n";
 		return 0;
 	}
+
+	// free the last pointer storing the image pixels
+	delete image;
+
+	// correct teminal color pallette
+	std::cout << "\033[0m";
+
+	// exit :D
+	return 0;
 }
