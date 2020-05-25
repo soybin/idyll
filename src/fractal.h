@@ -10,15 +10,19 @@ class fractal {
 		// fractal's variables. randomly set at runtime
 		int iterations;
 		int colorRange;
-		double zr;
+		double xs;
+		double zs;
 		double xr;
-		double zrs;
-		double zrc;
+		double yr;
+		double zr;
 		double xrs;
 		double xrc;
+		double yrs;
+		double yrc;
+		double zrs;
+		double zrc;
 		double shadowSoftness;
 		math::vec3 color;
-		math::vec3 shift;
 
 		// seed pointer
 		seed* s;

@@ -225,12 +225,6 @@ renderer::~renderer() {
 
 math::vec3 renderer::render(double y, double x) {
 
-	// nice constants
-	double shutterAperture = 0.6;
-  double fov = 2.5;
-	double focusDistance = 1.3;
-  double blurAmount = 0.0015;
-
 	// get ray direction relative to the pixel being rendered
 	// coordinates and rotate it
 	math::vec3 dir = calculateRayDirection(x, y);

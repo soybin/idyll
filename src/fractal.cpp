@@ -48,9 +48,8 @@ fractal::fractal(seed* s) : s(s) {
 	//
 	// determine fractal shift variation vector per iteration
 	//
-	shift.x = s->values["xshift"];
-	shift.y = s->values["yshift"];
-	shift.z = s->values["zshift"];
+	xs = s->values["xshift"];
+	zs = s->values["zshift"];
 	
 	//
 	// determine fractal rotation per iteration
@@ -61,10 +60,12 @@ fractal::fractal(seed* s) : s(s) {
 	//
 	// precompute sine and cosine of rotation angles
 	//
-	zrs = std::sin(zr);
-	zrc = std::cos(zr);
 	xrs = std::sin(xr);
 	xrc = std::cos(xr);
+	yrs = std::sin(yr);
+	yrc = std::cos(yr);
+	zrs = std::sin(zr);
+	zrc = std::cos(zr);
 
 	//
 	// determine shadow softness of the fractal
@@ -81,7 +82,7 @@ void fractal::iteratePoint(math::vec3& point) {
 	//
 	point = math::absolute(point);
 	//
-	// apply point folds and rotations
+	// apply point rotaions and folds
 	//
 	math::rotation::x(point, xrs, xrc);
 	math::rotation::z(point, zrs, zrc);
@@ -92,7 +93,8 @@ void fractal::iteratePoint(math::vec3& point) {
 	//
 	// apply fractal shift
 	//
-	point += shift;
+	point.x += xs;
+	point.y += zs;
 }
 
 //
@@ -108,7 +110,7 @@ double fractal::de(math::vec3 point) {
 double fractal::calculateShadow(math::ray r) {
 	double res = 1.0;
 	double ph = 1e20;
-	double tmax = 12.0;
+	double tmax = 16.0;
 	double t = 0.0001;
 	//
 	// kinda like raymarching the shadow with some fancy modifiers

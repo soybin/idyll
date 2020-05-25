@@ -20,9 +20,9 @@ seed::seed() : rng(dev()) {
 	values["zcameraDirection"] = cameraDirection.z;
 	// how far away should the camera be from the surface of the
 	// distance estimator
-	values["cameraDistance"] = i(3, 9);
+	values["cameraDistance"] = i(2, 5);
 	// directional light direction
-	math::vec3 lightDirection = math::normalize(cameraDirection + vec3(-0.01, 0.01));
+	math::vec3 lightDirection = math::normalize(cameraDirection + vec3(-0.1, 0.1));
 	values["xlightDirection"] = lightDirection.x;
 	values["ylightDirection"] = lightDirection.y;
 	values["zlightDirection"] = lightDirection.z;
@@ -30,16 +30,16 @@ seed::seed() : rng(dev()) {
 	math::vec3 lightColor;
 	lightColor.x = d(0.9, 1.1);
 	lightColor.y = d(lightColor.x - 0.1, lightColor.x + 0.1);
-	lightColor.z = d(lightColor.x - 0.2, lightColor.x + 0.2);
+	lightColor.z = d(lightColor.x - 0.1, lightColor.x + 0.1);
 	lightColor = math::normalize(lightColor);
 	values["xlightColor"] = lightColor.x;
 	values["ylightColor"] = lightColor.y;
 	values["zlightColor"] = lightColor.z;
 	// sky color
 	math::vec3 skyColor;
-	skyColor.x = d(0.75, 1.0);
-	skyColor.y = d(skyColor.x - 0.125, skyColor.x + 0.125);
-	skyColor.z = d(skyColor.x - 0.125, skyColor.x + 0.25);
+	skyColor.x = d(0.9, 1.1);
+	skyColor.y = d(skyColor.x - 0.1, skyColor.x + 0.1);
+	skyColor.z = d(skyColor.x - 0.1, skyColor.x + 0.1);
 	skyColor = math::normalize(skyColor);
 	values["xskyColor"] = skyColor.x;
 	values["yskyColor"] = skyColor.y;
@@ -49,15 +49,19 @@ seed::seed() : rng(dev()) {
 	//======== f r a c t a l    c o n s t a n t s ========//
 	//                                                    //
 	// number of iterations
-	values["iterations"] = i(16, 20);
+	values["iterations"] = i(16, 24);
 	// color range
-	values["colorRange"] = i(1, 3);
+	values["colorRange"] = i(1, 2);
 	// fractal base color
 	math::vec3 color;
 	color.x = d(0.0, 1.0);
-	color.z = d(0.0, 1.0 - color.x);
-	color.y = d(0.0, 1.0 - color.x - color.z);
-	color = math::normalize(math::vec3(0.4) + color);
+	color.z = d(0.0, 1.0 - color.x / 2.0);
+	color.y = d(0.0, 1.0 - color.x / 2.0 - color.z / 2.0);
+	color = math::normalize(vec3(-0.2, 0.2) + color);
+	for (int times = i(0, 2), j = 0; j < times; ++j) {
+		// pallette color shift
+		color = math::vec3(color.z, color.x, color.y);
+	}
 	values["xcolor"] = color.x;
 	values["ycolor"] = color.y;
 	values["zcolor"] = color.z;
@@ -72,16 +76,14 @@ seed::seed() : rng(dev()) {
 	values["ygradientBottom"] = normalizedGradientBottom.y;
 	values["zgradientBottom"] = normalizedGradientBottom.z;
 	// fractal point space shift per iteration
-	double maxShift = 0.6;
+	double maxShift = 0.72;
 	math::vec3 shift = vec3(-maxShift, -maxShift / 32.0);
 	values["xshift"] = shift.x;
-	values["yshift"] = shift.y / 16.0;
 	values["zshift"] = shift.z;	
 	// fractal point space rotation per iteration
-	double maxRotation = 0.2;
+	double maxRotation = 0.24;
 	math::vec3 rotation = vec3(-maxRotation, -maxRotation / 32.0);
 	values["xrotation"] = rotation.x;
-	values["yrotation"] = rotation.y / 16.0;
 	values["zrotation"] = rotation.z;
 	// shadow softess
 	values["shadowSoftness"] = d(0.5, 1.0);
@@ -197,21 +199,15 @@ seed::seed(std::string s) {
 					values["xshift"] = value;
 					break;
 				case 27:
-					values["yshift"] = value;
-					break;
-				case 28:
 					values["zshift"] = value;
 					break;
-				case 29:
+				case 28:
 					values["xrotation"] = value;
 					break;
-				case 30:
-					values["yrotation"] = value;
-					break;
-				case 31:
+				case 29:
 					values["zrotation"] = value;
 					break;
-				case 32:
+				case 30:
 					values["shadowSoftness"] = value;
 			}
 			++arg;
@@ -284,13 +280,9 @@ std::string seed::buildSeed() {
 	s += separationOps[i(0, m)];
 	s += std::to_string(values["xshift"]);
 	s += separationOps[i(0, m)];
-	s += std::to_string(values["yshift"]);
-	s += separationOps[i(0, m)];
 	s += std::to_string(values["zshift"]);
 	s += separationOps[i(0, m)];
 	s += std::to_string(values["xrotation"]);
-	s += separationOps[i(0, m)];
-	s += std::to_string(values["yrotation"]);
 	s += separationOps[i(0, m)];
 	s += std::to_string(values["zrotation"]);
 	s += separationOps[i(0, m)];

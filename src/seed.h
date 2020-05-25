@@ -27,9 +27,9 @@ class seed {
 		// [ gloss_chance, gloss_amount, xcamdir, ycamdir,
 		// zcamdir, camdist, xlightdir, ylightdir, zlightdir,
 		// xlightcol, ylightcol, zlightcol, xskycol, yskycol,
-		// zskycol, iter, xcol, ycol, zcol, xgt, ygt, zgt, xgb,
-		// ygb, zgb, xshift, yshift, zshift, xrot, yrot, zrot,
-		// shadow_softness ]
+		// zskycol, iter, colorRange, xcol, ycol, zcol, xgt,
+		// ygt, zgt, xgb, ygb, zgb, xshift, zshift,
+		// xrot, zrot, shadow_softness ]
 		seed(std::string s);
 		~seed();
 	
