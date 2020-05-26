@@ -1,3 +1,8 @@
+/*
+ * MIT License
+ * Copyright (c) 2020 Pablo Peñarroja
+ */
+
 #pragma once
 
 #include "math.h"
@@ -5,20 +10,27 @@
 #include <vector>
 #include <string>
 
+struct pointIterator {
+	double xs;
+	double zs;
+	double xrs;
+	double xrc;
+	double zrs;
+	double zrc;
+	pointIterator(double xs, double zs, double xrs, double xrc, double zrs, double zrc) : xs(xs), zs(zs), xrs(xrs), xrc(xrc), zrs(zrs), zrc(zrc) {}
+	virtual void iterate(math::vec3& point) = 0;
+};
+
 class fractal {
 	private:
 		// fractal's variables. randomly set at runtime
 		int iterations;
-		int colorRange;
 		double xs;
 		double zs;
 		double xr;
-		double yr;
 		double zr;
 		double xrs;
 		double xrc;
-		double yrs;
-		double yrc;
 		double zrs;
 		double zrc;
 		double shadowSoftness;
@@ -27,11 +39,9 @@ class fractal {
 		// seed pointer
 		seed* s;
 
-		//
-		// used when computing DE and color. 
-		// builds the fractal.
-		//
-		void iteratePoint(math::vec3& point);
+		// polymorphic point iterator
+		pointIterator* mainPI;
+
 	public:
 		math::vec3 gradientTop;
 		math::vec3 gradientBottom;

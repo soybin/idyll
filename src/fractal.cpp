@@ -1,7 +1,65 @@
+/*
+ * MIT License
+ * Copyright (c) 2020 Pablo Peñarroja
+ */
+
 #include "fractal.h"
 #include "seed.h"
 
 #include <iostream>
+
+//                                                //
+//======== p o i n t    i t e r a t o r s ========//
+//                                                //
+
+struct PI0 : pointIterator {
+	PI0(double xs, double zs, double xrs, double xrc, double zrs, double zrc) : pointIterator(xs, zs, xrs, xrc, zrs, zrc) {}
+	inline void iterate(math::vec3& point) {
+		point = math::absolute(point);
+		math::rotation::x(point, xrs, xrc);
+		math::rotation::z(point, zrs, zrc);
+		math::fold::menger(point);
+		math::rotation::z(point, zrs, zrc);
+		math::rotation::x(point, xrs, xrc);
+		math::fold::sierpinski(point);
+		point.x += xs;
+		point.z += zs;
+	}
+};
+
+struct PI1 : pointIterator {
+	PI1(double xs, double zs, double xrs, double xrc, double zrs, double zrc) : pointIterator(xs, zs, xrs, xrc, zrs, zrc) {}
+	inline void iterate(math::vec3& point) {
+		point = math::absolute(point);
+		math::rotation::z(point, zrs, zrc);
+		math::rotation::x(point, xrs, xrc);
+		math::fold::sierpinski(point);
+		math::rotation::x(point, xrs, xrc);
+		math::rotation::z(point, zrs, zrc);
+		math::fold::menger(point);
+		point.x += xs;
+		point.z += zs;
+	}
+};
+
+struct PI2 : pointIterator {
+	PI2(double xs, double zs, double xrs, double xrc, double zrs, double zrc) : pointIterator(xs, zs, xrs, xrc, zrs, zrc) {}
+	inline void iterate(math::vec3& point) {
+		point = math::absolute(point);
+		math::rotation::z(point, zrs, zrc);
+		math::rotation::x(point, xrs, xrc);
+		math::fold::sierpinski(point);
+		math::fold::menger(point);
+		math::rotation::x(point, xrs, xrc);
+		math::rotation::z(point, zrs, zrc);
+		point.x += xs;
+		point.z += zs;
+	}
+};
+
+//                                            //
+//======== f r a c t a l    c l a s s ========//
+//                                            //
 
 fractal::fractal(seed* s) : s(s) {
 
@@ -11,9 +69,9 @@ fractal::fractal(seed* s) : s(s) {
 	iterations = s->values["iterations"];
 
 	//
-	// number of iterations when coloring a point
+	// determine shadow softness of the fractal
 	//
-	colorRange = s->values["colorRange"];
+	shadowSoftness = s->values["shadowSoftness"];
 
 	//
 	// get fractal color
@@ -62,39 +120,27 @@ fractal::fractal(seed* s) : s(s) {
 	//
 	xrs = std::sin(xr);
 	xrc = std::cos(xr);
-	yrs = std::sin(yr);
-	yrc = std::cos(yr);
 	zrs = std::sin(zr);
 	zrc = std::cos(zr);
-
+	
 	//
-	// determine shadow softness of the fractal
+	// initialize point iterator
 	//
-	shadowSoftness = s->values["shadowSoftness"];
+	switch ((int)s->values["pointIterator"]) {
+		case 0:
+			mainPI = new PI0(xs, zs, xrs, xrc, zrs, zrc);
+			break;
+		case 1:
+			mainPI = new PI1(xs, zs, xrs, xrc, zrs, zrc);
+			break;
+		case 2:
+			mainPI = new PI2(xs, zs, xrs, xrc, zrs, zrc);
+			break;
+	}
 }
 
 fractal::~fractal() {
-}
-
-void fractal::iteratePoint(math::vec3& point) {
-	//
-	// get absolute point position
-	//
-	point = math::absolute(point);
-	//
-	// apply point rotaions and folds
-	//
-	math::rotation::x(point, xrs, xrc);
-	math::rotation::z(point, zrs, zrc);
-	math::fold::menger(point);
-	math::rotation::z(point, zrs, zrc);
-	math::rotation::x(point, xrs, xrc);
-	math::fold::sierpinski(point);
-	//
-	// apply fractal shift
-	//
-	point.x += xs;
-	point.y += zs;
+	delete mainPI;
 }
 
 //
@@ -102,7 +148,7 @@ void fractal::iteratePoint(math::vec3& point) {
 //
 double fractal::de(math::vec3 point) {
 	for (int i = 0; i < iterations; ++i) {
-		iteratePoint(point);
+		mainPI->iterate(point);
 	}
 	return math::de::box(point, 1.0);
 }
@@ -112,6 +158,7 @@ double fractal::calculateShadow(math::ray r) {
 	double ph = 1e20;
 	double tmax = 16.0;
 	double t = 0.0001;
+
 	//
 	// kinda like raymarching the shadow with some fancy modifiers
 	// to make it soft and round
@@ -132,13 +179,9 @@ double fractal::calculateShadow(math::ray r) {
 }
 
 math::vec3 fractal::calculateColor(math::vec3 point) {
-	math::vec3 orbit(0.0);
-	for (int i = 0; i < colorRange; ++i) {
-		iteratePoint(point);
-		math::vec3 pc = point * color;
-		orbit = math::vec3(std::max(pc.x, orbit.x), std::max(pc.y, orbit.y), std::max(pc.z, orbit.z));
-	}
-	return orbit;
+	mainPI->iterate(point);
+	math::vec3 pc = point * color;
+	return math::vec3(std::max(0.0, pc.x), std::max(0.0, pc.y), std::max(0.0, pc.z));
 }
 
 math::vec3 fractal::calculateNormal(math::vec3 point) {
