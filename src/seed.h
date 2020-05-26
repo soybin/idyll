@@ -1,3 +1,8 @@
+/*
+ * MIT License
+ * Copyright (c) 2020 Pablo Peñarroja
+ */
+
 #pragma once
 
 #include "math.h"
@@ -27,7 +32,7 @@ class seed {
 		// [ gloss_chance, gloss_amount, xcamdir, ycamdir,
 		// zcamdir, camdist, xlightdir, ylightdir, zlightdir,
 		// xlightcol, ylightcol, zlightcol, xskycol, yskycol,
-		// zskycol, iter, colorRange, xcol, ycol, zcol, xgt,
+		// zskycol, iter, pointIterator, xcol, ycol, zcol, xgt,
 		// ygt, zgt, xgb, ygb, zgb, xshift, zshift,
 		// xrot, zrot, shadow_softness ]
 		seed(std::string s);

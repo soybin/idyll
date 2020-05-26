@@ -1,17 +1,25 @@
-#include <algorithm>
+/*
+ * MIT License
+ * Copyright (c) 2020 Pablo Peñarroja
+ */
+
 #include "seed.h"
+
+#include <algorithm>
 
 // mersennes' twister prng algo initialized with random device
 // seed
 
 seed::seed() : rng(dev()) {
+
 	//                                                      //
 	//======== r e n d e r e r    c o n s t a n t s ========//
 	//                                                      //
+	
 	// chance for a ray to be reflected with a cone distribution
-	values["GLOSSINESS_CHANCE"] = d(0.5, 1.0);
+	values["GLOSSINESS_CHANCE"] = d(0.0, 0.2);
 	// how glossy should the reflection be
-	values["GLOSSINESS_AMOUNT"] = d(0.0, 0.5);
+	values["GLOSSINESS_AMOUNT"] = d(0.0, 1.0);
 	// direction in which a ray should be marched until getting
 	// out of the fractal distance estimator
 	math::vec3 cameraDirection = math::normalize(vec3(-1.0, 1.0));
@@ -20,17 +28,17 @@ seed::seed() : rng(dev()) {
 	values["zcameraDirection"] = cameraDirection.z;
 	// how far away should the camera be from the surface of the
 	// distance estimator
-	values["cameraDistance"] = i(2, 5);
+	values["cameraDistance"] = i(3, 5);
 	// directional light direction
-	math::vec3 lightDirection = math::normalize(cameraDirection + vec3(-0.1, 0.1));
+	math::vec3 lightDirection = math::normalize(cameraDirection + vec3(-1.0, 1.0));
 	values["xlightDirection"] = lightDirection.x;
 	values["ylightDirection"] = lightDirection.y;
 	values["zlightDirection"] = lightDirection.z;
 	// directional light color
 	math::vec3 lightColor;
 	lightColor.x = d(0.9, 1.1);
-	lightColor.y = d(lightColor.x - 0.1, lightColor.x + 0.1);
-	lightColor.z = d(lightColor.x - 0.1, lightColor.x + 0.1);
+	lightColor.y = d(lightColor.x - 0.05, lightColor.x + 0.05);
+	lightColor.z = d(lightColor.x - 0.05, lightColor.x + 0.05);
 	lightColor = math::normalize(lightColor);
 	values["xlightColor"] = lightColor.x;
 	values["ylightColor"] = lightColor.y;
@@ -44,20 +52,21 @@ seed::seed() : rng(dev()) {
 	values["xskyColor"] = skyColor.x;
 	values["yskyColor"] = skyColor.y;
 	values["zskyColor"] = skyColor.z;
-
+	
 	//                                                    //
 	//======== f r a c t a l    c o n s t a n t s ========//
 	//                                                    //
+
 	// number of iterations
 	values["iterations"] = i(16, 24);
-	// color range
-	values["colorRange"] = i(1, 2);
+	// shadow softess
+	values["shadowSoftness"] = d(0.5, 1.0);
 	// fractal base color
 	math::vec3 color;
 	color.x = d(0.0, 1.0);
-	color.z = d(0.0, 1.0 - color.x / 2.0);
-	color.y = d(0.0, 1.0 - color.x / 2.0 - color.z / 2.0);
-	color = math::normalize(vec3(-0.2, 0.2) + color);
+	color.z = d(0.0, 1.0 - color.x / 4.0);
+	color.y = d(0.0, 1.0 - color.x / 4.0 - color.z / 4.0);
+	color = math::normalize(color);
 	for (int times = i(0, 2), j = 0; j < times; ++j) {
 		// pallette color shift
 		color = math::vec3(color.z, color.x, color.y);
@@ -76,17 +85,17 @@ seed::seed() : rng(dev()) {
 	values["ygradientBottom"] = normalizedGradientBottom.y;
 	values["zgradientBottom"] = normalizedGradientBottom.z;
 	// fractal point space shift per iteration
-	double maxShift = 0.72;
-	math::vec3 shift = vec3(-maxShift, -maxShift / 32.0);
+	double maxShift = 0.8;
+	math::vec3 shift = vec3(-maxShift, -maxShift / 8.0);
 	values["xshift"] = shift.x;
 	values["zshift"] = shift.z;	
 	// fractal point space rotation per iteration
-	double maxRotation = 0.24;
-	math::vec3 rotation = vec3(-maxRotation, -maxRotation / 32.0);
+	double maxRotation = 0.2;
+	math::vec3 rotation = vec3(-maxRotation, -maxRotation / 2.0);
 	values["xrotation"] = rotation.x;
 	values["zrotation"] = rotation.z;
-	// shadow softess
-	values["shadowSoftness"] = d(0.5, 1.0);
+	// point iteration polymorphic function
+	values["pointIterator"] = i(0, 2);
 }
 
 seed::seed(std::string s) {
@@ -166,7 +175,7 @@ seed::seed(std::string s) {
 					values["iterations"] = value;
 					break;
 				case 16:
-					values["colorRange"] = value;
+					values["shadowSoftness"] = value;
 					break;
 				case 17:
 					values["xcolor"] = value;
@@ -208,7 +217,8 @@ seed::seed(std::string s) {
 					values["zrotation"] = value;
 					break;
 				case 30:
-					values["shadowSoftness"] = value;
+					values["pointIterator"] = value;
+					break;
 			}
 			++arg;
 			str = "";
@@ -223,9 +233,9 @@ std::string seed::buildSeed() {
 	std::vector<char> startOps = { '{', '(', '<', '[' };
 	std::vector<char> endOps = { '}', ')', '>', ']' };
 	std::vector<char> separationOps = { '!', '@', '#', '$', '%', '^', '&', '*' };
-	int n = startOps.size(), m = separationOps.size();
+	int n = startOps.size() - 1, m = separationOps.size() - 1;
 	std::string s = "";
-	s += startOps[i(0, n - 1)];
+	s += startOps[i(0, n)];
 	s += std::to_string(values["GLOSSINESS_CHANCE"]);
 	s += separationOps[i(0, m)];
 	s += std::to_string(values["GLOSSINESS_AMOUNT"]);
@@ -258,7 +268,7 @@ std::string seed::buildSeed() {
 	s += separationOps[i(0, m)];
 	s += std::to_string(values["iterations"]);
 	s += separationOps[i(0, m)];
-	s += std::to_string(values["colorRange"]);
+	s += std::to_string(values["shadowSoftness"]);
 	s += separationOps[i(0, m)];
 	s += std::to_string(values["xcolor"]);
 	s += separationOps[i(0, m)];
@@ -286,7 +296,7 @@ std::string seed::buildSeed() {
 	s += separationOps[i(0, m)];
 	s += std::to_string(values["zrotation"]);
 	s += separationOps[i(0, m)];
-	s += std::to_string(values["shadowSoftness"]);
+	s += std::to_string(values["pointIterator"]);
 	s += endOps[i(0, n)];
 	return s;
 }
