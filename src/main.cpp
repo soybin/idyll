@@ -1,15 +1,21 @@
+/*
+ * MIT License
+ * Copyright (c) 2020 Pablo Peñarroja
+ */
+
+// png lib by Nayuki (https://www.nayuki.io/page/tiny-png-output)
+#include "TinyPngOut.hpp"
+
 #include "config.h"
 #include "fractal.h"
 #include "gui.h"
 #include "math.h"
 #include "seed.h"
 #include "renderer.h"
+
 #include <fstream>
 #include <iostream>
 #include <thread>
-
-// png lib by Nayuki (https://www.nayuki.io/page/tiny-png-output)
-#include "TinyPngOut.hpp"
 
 // this function wil be instantiated in multiple threads at runtime. it iterates
 // through a specified range in a 2d matrix and renders every pixel in the range.
@@ -38,23 +44,28 @@ int main(int argc, char* argv[]) {
 
 	// pointer to seed object and parsing user input
 	seed* s;
-	std::string seedStr = config::getSeed();
-	if (seedStr == "-1") {
-		s = new seed();
-		// write current seed to config file
-		std::string generatedSeed = s->buildSeed();
-		std::cout << "[+] Successfully generated seed:\n";
-		std::cout << generatedSeed << '\n';
-		config::setSeed(generatedSeed);
-	} else {
-		s = new seed(seedStr);
+	if (argc > 2) {
+		std::cout << "[-] The only permissible argument is a seed's file location.\n\n";
+		return 0;
+	} else if (argc == 2) {
+		std::ifstream seedFile(argv[1]);
+		if (!seedFile.good()) {
+			std::cout << "[-] Couldn't find specified file.\n\n";
+			return 0;
+		}
+		std::string seedData;
+		std::getline(seedFile, seedData);
+		s = new seed(seedData);
 		if (!s->seedParsingSuccessful) {
-			std::cout << "[-] Input seed not valid. Exiting.\n";
+			std::cout << "[-] Input seed not valid.\n\n";
 			delete s;
 			return 0;
 		}
+		std::cout << "[+] Successfully read seed from '" << argv[1] << "'.\n";
+	} else {
+		s = new seed();
 	}
-
+	
 	// pointer to fractal object
 	fractal* f = new fractal(s);
 
@@ -121,11 +132,6 @@ int main(int argc, char* argv[]) {
 		threads.push_back(std::thread{renderRange, lastY, height, lastX, width, width, height, chunk, r, image});
 	}
 
-	//
-	// inform that everything's alright
-	//
-	std::cout << "[+] Rendering seeded region:\n";
-
 	// render the first chunk in the main application thread
 	// so that it can update the gui progress bar
 	int count = 0;
@@ -143,23 +149,23 @@ int main(int argc, char* argv[]) {
 	}
 
 	//
-	// free heap allocated memory
-	//
-	delete s;
-	delete f;
-	delete r;
-
-	//
 	// define output file's path
 	//
-	int pathCount = 0;
-	std::string path;
-	for (bool ok = true; ok & 1; ++pathCount) {
-		path = "render" + std::to_string(pathCount);
-		std::ifstream pngFile(path + ".png");
-		std::ifstream ppmFile(path + ".ppm");
+	int fileCount = 0;
+	std::string fileCountStr;
+	for (bool ok = true; ok & 1; ++fileCount) {
+		fileCountStr = std::to_string(fileCount);
+		std::ifstream pngFile("render" + fileCountStr + ".png");
+		std::ifstream ppmFile("render" + fileCountStr + ".ppm");
 		ok = pngFile.good() || ppmFile.good(); 
 	}
+
+	//
+	// store seed inside new file
+	//
+	std::ofstream seedOut("seed" + fileCountStr + ".txt");
+	seedOut << s->buildSeed();
+	std::cout << "[+] Successfully stored seed at 'seed" << fileCountStr << ".txt'.\n";
 
 	if (config::getInt("png")) {
 		//
@@ -169,7 +175,8 @@ int main(int argc, char* argv[]) {
 		// https://www.nayuki.io/page/tiny-png-output
 		//
 		try {
-			std::ofstream out(path + ".png", std::ios::binary);
+			// write image
+			std::ofstream out("render" + fileCountStr + ".png", std::ios::binary);
 			TinyPngOut pngout(static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height), out);
 			std::vector<std::uint8_t> line(static_cast<size_t>(width) * 3);
 			for (int y = 0; y < height; ++y) {
@@ -181,7 +188,7 @@ int main(int argc, char* argv[]) {
 				}
 				pngout.write(line.data(), static_cast<size_t>(width));
 			}
-			std::cout << "[+] Successfully rendered region to " << path << ".png\n\n";	
+			std::cout << "[+] Successfully stored png file to 'render" << fileCountStr << ".png'.\n\n";	
 		} catch (const char* message) {
 			std::cout << message << std::endl;
 		}
@@ -189,7 +196,7 @@ int main(int argc, char* argv[]) {
 		//
 		// write image data to ppm file
 		//
-		std::ofstream out(path + ".ppm");
+		std::ofstream out("render" + fileCountStr + ".ppm");
 		out << "P3\n" << width << ' ' << height << ' ' << 255 << '\n';
 		for (int i = 0; i < height; ++i) {
 			for (int j = 0; j < width; ++j) {
@@ -197,11 +204,15 @@ int main(int argc, char* argv[]) {
 				out << (int)pixel.x << ' ' << (int)pixel.y << ' ' << (int)pixel.z << '\n';
 			}
 		}
-		std::cout << "[+] Successfully rendered region to " << path << ".ppm\n\n";
-		return 0;
+		std::cout << "[+] Successfully store ppm file to 'render" << fileCountStr << ".ppm'.\n\n";
 	}
 
-	// free the last pointer storing the image pixels
+	//
+	// free heap allocated memory
+	//
+	delete s;
+	delete f;
+	delete r;
 	delete image;
 
 	// correct teminal color pallette

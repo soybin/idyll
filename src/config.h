@@ -1,3 +1,8 @@
+/*
+ * MIT License
+ * Copyright (c) 2020 Pablo Peñarroja
+ */
+
 #pragma once
 
 #include <string>
@@ -5,7 +10,5 @@
 
 namespace config {
 	extern int getInt(std::string name);
-	extern void setSeed(std::string s);
-	extern std::string getSeed();
 	extern void reset();
 }
