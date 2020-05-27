@@ -34,30 +34,30 @@ int main(int argc, char* argv[]) {
 	// base coordinates
 	double y = 0.5, x = 0.5;
 
+	// init gui
+	gui::setup();
+
 	// get config info
 	int width = config::getInt("width");
 	int height = config::getInt("height");
 	int threadCount = config::getInt("threads");
 
-	// init gui
-	gui::setup();
-
 	// pointer to seed object and parsing user input
 	seed* s;
 	if (argc > 2) {
-		std::cout << "[-] The only permissible argument is a seed's file location.\n\n";
+		std::cout << "[-] The only permissible argument is a seed file's location.\n\n";
 		return 0;
 	} else if (argc == 2) {
 		std::ifstream seedFile(argv[1]);
 		if (!seedFile.good()) {
-			std::cout << "[-] Couldn't find specified file.\n\n";
+			std::cout << "[-] Couldn't find specified seed file.\n\n";
 			return 0;
 		}
 		std::string seedData;
 		std::getline(seedFile, seedData);
 		s = new seed(seedData);
 		if (!s->seedParsingSuccessful) {
-			std::cout << "[-] Input seed not valid.\n\n";
+			std::cout << "[-] Seed not valid.\n\n";
 			delete s;
 			return 0;
 		}
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 	} else {
 		s = new seed();
 	}
-	
+
 	// pointer to fractal object
 	fractal* f = new fractal(s);
 

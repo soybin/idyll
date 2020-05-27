@@ -99,13 +99,14 @@ seed::seed() : rng(dev()) {
 }
 
 seed::seed(std::string s) {
-	seedParsingSuccessful = true;
+	seedParsingSuccessful = false;
 	std::vector<char> startOps = { '{', '(', '<', '[' };
 	std::vector<char> endOps = { '}', ')', '>', ']' };
 	std::vector<char> separationOps = { '!', '@', '#', '$', '%', '^', '&', '*' };
 	int n = s.size();
 	std::string str = "";
-	for (int i = 0, arg = 0; i < n; ++i) {
+	int arg = 0;
+	for (int i = 0; i < n; ++i) {
 		char c = s[i];
 		bool end = false;
 		for (int j = 0; j < 4; ++j) {
@@ -224,6 +225,7 @@ seed::seed(std::string s) {
 			str = "";
 		}
 	}
+	seedParsingSuccessful = arg == 31;
 }
 
 seed::~seed() {

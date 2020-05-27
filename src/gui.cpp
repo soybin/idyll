@@ -64,6 +64,6 @@ namespace gui {
 			std::cout << "\033[1;36m]" << std::flush;
 			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 		} while (lockedValue < tarV);
-		std::cout << "\033[0;36m\n\n";
+		std::cout << "\033[0;36m\n";
 	}
 }

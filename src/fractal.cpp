@@ -8,9 +8,9 @@
 
 #include <iostream>
 
-//                                                //
-//======== p o i n t    i t e r a t o r s ========//
-//                                                //
+//                                                            //
+//======== p o l y m o r p h i c    i t e r a t o r s ========//
+//                                                            //
 
 struct PI0 : pointIterator {
 	PI0(double xs, double zs, double xrs, double xrc, double zrs, double zrc) : pointIterator(xs, zs, xrs, xrc, zrs, zrc) {}
