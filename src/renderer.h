@@ -1,3 +1,8 @@
+/*
+ * MIT License
+ * Copyright (c) 2020 Pablo Peñarroja
+ */
+
 #pragma once
 
 #include "math.h"

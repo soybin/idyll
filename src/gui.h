@@ -1,3 +1,8 @@
+/*
+ * MIT License
+ * Copyright (c) 2020 Pablo Peñarroja
+ */
+
 #include <iostream>
 
 namespace gui {

@@ -1,10 +1,15 @@
+/*
+ * MIT License
+ * Copyright (c) 2020 Pablo Peñarroja
+ */
+
 #include "renderer.h"
 #include "seed.h"
 #include "config.h"
 
 #include <iostream>
 
-const double MAX_DIST = 1024.0;
+const double MAX_DIST = 256.0;
 const double MIN_DIST = 1e-5;
 const double PI = 3.14159265358979;
 

@@ -1,4 +1,10 @@
+/*
+ * MIT License
+ * Copyright (c) 2020 Pablo Peñarroja
+ */
+
 #include "gui.h"
+
 #include <thread>
 #include <cstdlib>
 
@@ -44,7 +50,7 @@ namespace gui {
 	void update(int* curV, int tarV) {
 
 		double lockedValue = *curV;
-		do{
+		do {
 			lockedValue = *curV;
 			// width of logo is 34 characters. two of which
 			// will be used for the extremes of the bar.
@@ -58,6 +64,6 @@ namespace gui {
 			std::cout << "\033[1;36m]" << std::flush;
 			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 		} while (lockedValue < tarV);
-		std::cout << "\033[0;36m\n";
+		std::cout << "\033[0;36m\n\n";
 	}
 }
