@@ -1,4 +1,10 @@
+/*
+ * MIT License
+ * Copyright (c) 2020 Pablo Peñarroja
+ */
+
 #include "math.h"
+
 #include <algorithm>
 
 #define PI 3.14159265358979
