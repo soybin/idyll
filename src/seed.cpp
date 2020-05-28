@@ -37,8 +37,8 @@ seed::seed() : rng(dev()) {
 	// directional light color
 	math::vec3 lightColor;
 	lightColor.x = d(0.9, 1.1);
-	lightColor.y = d(lightColor.x - 0.05, lightColor.x + 0.05);
-	lightColor.z = d(lightColor.x - 0.05, lightColor.x + 0.05);
+	lightColor.y = d(lightColor.x - 0.1, lightColor.x + 0.1);
+	lightColor.z = d(lightColor.x - 0.1, lightColor.x + 0.1);
 	lightColor = math::normalize(lightColor);
 	values["xlightColor"] = lightColor.x;
 	values["ylightColor"] = lightColor.y;
@@ -64,8 +64,8 @@ seed::seed() : rng(dev()) {
 	// fractal base color
 	math::vec3 color;
 	color.x = d(0.0, 1.0);
-	color.z = d(0.0, 1.0 - color.x / 4.0);
-	color.y = d(0.0, 1.0 - color.x / 4.0 - color.z / 4.0);
+	color.y = d(0.0, 1.0 - color.x / 2.0);
+	color.z = d(0.0, 1.0 - color.x / 2.0 - color.y / 2.0);
 	color = math::normalize(color);
 	for (int times = i(0, 2), j = 0; j < times; ++j) {
 		// pallette color shift
@@ -90,10 +90,8 @@ seed::seed() : rng(dev()) {
 	values["xshift"] = shift.x;
 	values["zshift"] = shift.z;	
 	// fractal point space rotation per iteration
-	double maxRotation = 0.2;
-	math::vec3 rotation = vec3(-maxRotation, -maxRotation / 2.0);
-	values["xrotation"] = rotation.x;
-	values["zrotation"] = rotation.z;
+	values["xrotation"] = d(-0.2, -0.01);
+	values["zrotation"] = d(-0.2, -0.01);
 	// point iteration polymorphic function
 	values["pointIterator"] = i(0, 2);
 }
