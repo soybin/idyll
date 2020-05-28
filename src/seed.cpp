@@ -64,8 +64,8 @@ seed::seed() : rng(dev()) {
 	// fractal base color
 	math::vec3 color;
 	color.x = d(0.0, 1.0);
-	color.y = d(0.0, 1.0 - color.x / 2.0);
-	color.z = d(0.0, 1.0 - color.x / 2.0 - color.y / 2.0);
+	color.y = d(0.0, 1.0 - color.x);
+	color.z = d(0.0, std::max(0.0, 1.0 - color.x - color.y));
 	color = math::normalize(color);
 	for (int times = i(0, 2), j = 0; j < times; ++j) {
 		// pallette color shift
