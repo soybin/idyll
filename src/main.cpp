@@ -217,6 +217,10 @@ int main(int argc, char* argv[]) {
 
 	// correct teminal color pallette
 	std::cout << "\033[0m";
+	
+#ifdef _WIN32
+	std::system("pause");
+#endif
 
 	// exit :D
 	return 0;
