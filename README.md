@@ -8,12 +8,8 @@ _idyll_ is a fractal engine, designed for the purpose of rendering beautiful, st
 * raymarching used for fractal distance estimation
 * cpu-based
 * multi-threaded
-* random seed generation
-* seed saving/loading system
+* seed generation/saving/loading system
 * configuration file
-* highly portable
-* dependent-less
-* lightweight
 
 ## installation
 you can either download the binary/exe version or compile the source code it yourself
@@ -43,6 +39,5 @@ when the program finishes running, you'll find a '.txt' file named 'seed' + "num
 idyll.exe seed0.txt
 ```
 
-## dependencies
-Absolutely none.
-_idyll_ is self-contained, written in c++, and, thanks to the [TinyPngOut](https://www.nayuki.io/page/tiny-png-output) library by Nayuki, _idyll_ doesn't rely on the huge, yet common, [libpng library](http://www.libpng.org/pub/png/libpng.html).
+## system dependencies
+none. _idyll_ doesn't rely on any system-level libraries. the whole program fits within a 100KB binary file and, thanks to the [TinyPngOut](https://www.nayuki.io/page/tiny-png-output) library by Nayuki, _idyll_ doesn't use the huge, yet common, [libpng library](http://www.libpng.org/pub/png/libpng.html).
