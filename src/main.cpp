@@ -182,9 +182,9 @@ int main(int argc, char* argv[]) {
 			for (int y = 0; y < height; ++y) {
 				for (int x = 0; x < width; ++x) {
 					math::vec3 pixel = (*image)[y][x];
-					line[x * 3 + 0] = static_cast<uint8_t>(pixel.x);
-					line[x * 3 + 1] = static_cast<uint8_t>(pixel.y);
-					line[x * 3 + 2] = static_cast<uint8_t>(pixel.z);
+					line[(long long)x * 3 + 0] = static_cast<uint8_t>(pixel.x);
+					line[(long long)x * 3 + 1] = static_cast<uint8_t>(pixel.y);
+					line[(long long)x * 3 + 2] = static_cast<uint8_t>(pixel.z);
 				}
 				pngout.write(line.data(), static_cast<size_t>(width));
 			}
