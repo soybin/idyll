@@ -17,7 +17,7 @@ seed::seed() : rng(dev()) {
 	//                                                      //
 	
 	// chance for a ray to be reflected with a cone distribution
-	values["GLOSSINESS_CHANCE"] = d(0.0, 0.2);
+	values["GLOSSINESS_CHANCE"] = d(0.0, 0.4);
 	// how glossy should the reflection be
 	values["GLOSSINESS_AMOUNT"] = d(0.0, 1.0);
 	// direction in which a ray should be marched until getting
@@ -28,7 +28,7 @@ seed::seed() : rng(dev()) {
 	values["zcameraDirection"] = cameraDirection.z;
 	// how far away should the camera be from the surface of the
 	// distance estimator
-	values["cameraDistance"] = i(3, 5);
+	values["cameraDistance"] = i(2, 4);
 	// directional light direction
 	math::vec3 lightDirection = math::normalize(cameraDirection + vec3(-1.0, 1.0));
 	values["xlightDirection"] = lightDirection.x;
@@ -85,10 +85,8 @@ seed::seed() : rng(dev()) {
 	values["ygradientBottom"] = normalizedGradientBottom.y;
 	values["zgradientBottom"] = normalizedGradientBottom.z;
 	// fractal point space shift per iteration
-	double maxShift = 0.8;
-	math::vec3 shift = vec3(-maxShift, -maxShift / 8.0);
-	values["xshift"] = shift.x;
-	values["zshift"] = shift.z;	
+	values["xshift"] = d(-0.8, -0.2);
+	values["zshift"] = d(-0.8, -0.2);
 	// fractal point space rotation per iteration
 	values["xrotation"] = d(-0.2, -0.01);
 	values["zrotation"] = d(-0.2, -0.01);
@@ -314,3 +312,4 @@ double seed::d(double min, double max) {
 math::vec3 seed::vec3(double min, double max) {
 	return math::vec3(d(min, max), d(min, max), d(min, max));
 }
+

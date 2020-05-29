@@ -14,7 +14,7 @@ namespace gui {
 		// clear console.
 		// os dependant
 		//
-#ifdef WINDOWS
+#ifdef _WIN32
 		std::system("cls");
 #else
 		std::system("clear");
@@ -30,7 +30,7 @@ namespace gui {
 			"     o  ______/           /  /    \n",
 			"   /  /     /  /     /  /  /      \n",
 			" /  /     /  /     /  /  /        \n",
-			"(__(____/(__(____/(__(__(__ o     \n",
+			"(__(____/(__(____/(__(__(__       \n",
 			"               /                  \n",
 			"             /                    \n",
 			"      (____/                      \n",
@@ -48,8 +48,8 @@ namespace gui {
 	}
 	
 	void update(int* curV, int tarV) {
-
 		double lockedValue = *curV;
+
 		do {
 			lockedValue = *curV;
 			// width of logo is 34 characters. two of which
@@ -61,7 +61,8 @@ namespace gui {
 			for (int i = 0; i < 32; ++i) {
 				std::cout << (i < quantity ? "\033[1;36m=" : "\033[0m-");
 			}
-			std::cout << "\033[1;36m]" << std::flush;
+			std::cout << "\033[1;36m]";
+			std::cout.flush();
 			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 		} while (lockedValue < tarV);
 		std::cout << "\033[0;36m\n";
