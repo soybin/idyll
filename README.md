@@ -3,16 +3,22 @@
 ### _an idyllic region in your computer's heap for fractals to coexist in complete peace and harmony_
 _idyll_ is a fractal engine, designed for the purpose of rendering beautiful, stunning and completely unique images of iterative fractals. if that sounds complicated, [**_this is a nice visual summary_**](https://www.youtube.com/watch?v=TIDYJsa3Z1A).
 
-## why?
-finding wallpapers that I like ends being a waste of time every now and then, so I decided to _invest_ countless hours of my time developing a tool that solves this recurrent problem of mine in the coolest way possible.
-
-## how?
-since I first decided that I would do this, I've gone deep down the rabbit hole of rendering techniques, distance estimators, and all of that good stuff related to fractals and graphics.
-If you're interested in any of this or wondering how does _idyll_ work, please consider taking a look at [**_this nice explanation_**](apple.com).
+## technical details
+* path-tracing used to compute global illumination
+* raymarching used for fractal distance estimation
+* cpu-based
+* multi-threaded
+* random seed generation
+* seed saving/loading system
+* configuration file
+* highly portable
+* dependent-less
+* lightweight
 
 ## installation
-you can either download the binary/exe version or compile it yourself
-### download
+you can either download the binary/exe version or compile the source code it yourself
+
+### download binary
 [download the binary here](soybin.itch.io/idyll)
 ### compile
 just clone the package and make the makefile
@@ -21,6 +27,20 @@ git clone https://github.com/soybin/idyll
 cd idyll
 make
 ./idyll
+```
+
+## seeds
+seeds serve the purpose of storing the data from each fractal that you generate when using idyll. for example, if you just rendered a fractal that you really like and you would like to render the very same fractal at a higher quality—or different resolution—you can easily accomplish this task:
+
+when the program finishes running, you'll find a '.txt' file named 'seed' + "number of the rendered fractal" + '.txt'. for example, if you just rendered a fractal and the output file for it was 'render23.png', then the seed file for that fractal will be 'seed23.txt'. then, **just run the program from your preferred terminal and pass the directory of the desired seed file as the first argument**.
+
+### unix
+```
+./idyll seed0.txt
+```
+### windows
+```
+idyll.exe seed0.txt
 ```
 
 ## dependencies
