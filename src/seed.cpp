@@ -58,18 +58,30 @@ seed::seed() : rng(dev()) {
 	//                                                    //
 
 	// number of iterations
-	values["iterations"] = i(16, 24);
+	values["iterations"] = i(16, 18);
 	// shadow softess
 	values["shadowSoftness"] = d(0.5, 1.0);
 	// fractal base color
 	math::vec3 color;
-	color.x = d(0.0, 1.0);
-	color.y = d(0.0, 1.0 - color.x);
-	color.z = d(0.0, std::max(0.0, 1.0 - color.x - color.y));
+	color.x = 1.0;
+	color.y = 0.25;
+	color.z = 0.125;
 	color = math::normalize(color);
-	for (int times = i(0, 2), j = 0; j < times; ++j) {
-		// pallette color shift
-		color = math::vec3(color.z, color.x, color.y);
+	for (int ii = i(0, 6); ii > 0; --ii) {
+		int jj = i(0, 2);
+		if (jj == 0) {
+			double temp = color.x;
+			color.x = color.y;
+			color.y = temp;
+		} else if (jj == 1) {
+			double temp = color.y;
+			color.y = color.z;
+			color.z = temp;
+		} else {
+			double temp = color.z;
+			color.z = color.x;
+			color.x = temp;
+		}
 	}
 	values["xcolor"] = color.x;
 	values["ycolor"] = color.y;
@@ -85,11 +97,11 @@ seed::seed() : rng(dev()) {
 	values["ygradientBottom"] = normalizedGradientBottom.y;
 	values["zgradientBottom"] = normalizedGradientBottom.z;
 	// fractal point space shift per iteration
-	values["xshift"] = d(-0.8, -0.2);
-	values["zshift"] = d(-0.8, -0.2);
+	values["xshift"] = d(-0.4, -0.1);
+	values["zshift"] = d(-0.4, -0.1);
 	// fractal point space rotation per iteration
-	values["xrotation"] = d(-0.2, -0.01);
-	values["zrotation"] = d(-0.2, -0.01);
+	values["xrotation"] = d(-0.2, -0.1);
+	values["zrotation"] = d(-0.2, -0.1);
 	// point iteration polymorphic function
 	values["pointIterator"] = i(0, 2);
 }
@@ -312,4 +324,3 @@ double seed::d(double min, double max) {
 math::vec3 seed::vec3(double min, double max) {
 	return math::vec3(d(min, max), d(min, max), d(min, max));
 }
-
