@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
 	// render the first chunk in the main application thread
 	// so that it can update the gui progress bar
 	int count = 0;
-	std::thread{gui::update, &count, chunk}.detach();
+	std::thread guiThread(gui::update, &count, chunk);
 	for (int y = 0; y < height && count < chunk; ++y) {
 		for (int x = 0; x < width && count < chunk; ++x) {
 			(*image)[y][x] = r->render((double)height - ((double)y + 0.5f), (double)x + 0.5);
@@ -147,6 +147,9 @@ int main(int argc, char* argv[]) {
 	for (auto& thread : threads) {
 		thread.join();
 	}
+	
+	// wait for graphical user interface thread
+	guiThread.join();
 
 	//
 	// define output file's path
