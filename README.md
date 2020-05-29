@@ -1,7 +1,7 @@
 # _idyll_
 
 ### _an idyllic region in your computer's heap for fractals to coexist in complete peace and harmony_
-_idyll_ is a fractal engine, designed for the purpose of rendering beautiful, stunning and completely unique images of iterative fractals. if that sounds complicated, [**_this is a nice visual summary_**](https://www.youtube.com/watch?v=TIDYJsa3Z1A).
+_idyll_ is a fractal engine, designed for the purpose of rendering beautiful, stunning and completely unique images of iterative fractals. if that sounds complicated, [**_this is a nice visual summary_**](https://youtu.be/cFykbtJmg4A).
 
 ## features
 * path-tracing used to compute global illumination
@@ -28,9 +28,10 @@ make
 
 ## usage
 1. run idyll.
-1. a configuration file named 'config.txt' will be created in the same directory. the first time you run the program, the 'config .txt' file will have standard values, and it'll take about 5/10 minutes on an intel i7 cpu to render.
+1. a configuration file named 'config.txt' will be created in the same directory.
+1. the first time you run the program, the 'config .txt' file will have standard values, and it'll take about 5/10 minutes on an intel i7 cpu to render.
 1. you can change the values at the 'config.txt' file to fit your needs by changing the resolution, rendering quality and some other values explained in the same 'config.txt' file.
-1. enjoy your fresh, new fractals!
+1. enjoy your fresh and unique fractals!
 
 ## seeds
 seeds serve the purpose of storing the data of each generated fractal using idyll. for example, if you just rendered a fractal that you really like and you would like to render the very same fractal at a higher quality—or different resolution—you can easily accomplish this task:
