@@ -29,8 +29,8 @@ make
 ## usage
 1. run idyll.
 1. a configuration file named 'config.txt' will be created in the same directory.
-1. the first time you run the program, the 'config .txt' file will have standard values, and it'll take about 5/10 minutes on an intel i7 cpu to render.
-1. you can change the values at the 'config.txt' file to fit your needs by changing the resolution, rendering quality and some other values explained in the same 'config.txt' file.
+1. the first time you run the program, the 'config .txt' file will have standard values.
+1. you can change the values at the 'config.txt' file to fit your needs by changing the resolution, rendering quality and some other values detailed in the 'config.txt' file.
 1. enjoy your fresh and unique fractals!
 
 ## seeds
