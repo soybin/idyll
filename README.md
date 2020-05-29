@@ -16,7 +16,7 @@ none. _idyll_ doesn't rely on any system-level libraries. the whole program fits
 
 ## installation
 you can either download the binary/exe version or compile the source code it yourself
-### [download](soybin.itch.io/idyll)
+### [download](https://soybin.itch.io/idyll)
 ### compile
 just clone the repo and make
 ```
@@ -25,6 +25,12 @@ cd idyll
 make
 ./idyll
 ```
+
+## usage
+1. run idyll.
+1. a configuration file named 'config.txt' will be created in the same directory. the first time you run the program, the 'config .txt' file will have standard values, and it'll take about 5/10 minutes on an intel i7 cpu to render.
+1. you can change the values at the 'config.txt' file to fit your needs by changing the resolution, rendering quality and some other values explained in the same 'config.txt' file.
+1. enjoy your fresh, new fractals!
 
 ## seeds
 seeds serve the purpose of storing the data of each generated fractal using idyll. for example, if you just rendered a fractal that you really like and you would like to render the very same fractal at a higher quality—or different resolution—you can easily accomplish this task:
