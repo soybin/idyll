@@ -65,7 +65,7 @@ namespace config {
 		file << "\n";
 		file << "# number of samples #\n";
 		file << "# more samples equals less noise #\n";
-		file << "samples 8\n";
+		file << "samples 4\n";
 		file << "\n";
 		file << "# camera field of view in degrees #\n";
 		file << "fov 45\n";
