@@ -1,7 +1,7 @@
 # _idyll_
 
 ### _an idyllic region in your computer's heap for fractals to coexist in complete peace and harmony_
-_idyll_ is a fractal engine, designed for the purpose of rendering beautiful, stunning and completely unique images of iterative fractals. if that sounds complicated, [**_this is a nice visual summary_**](https://youtu.be/cFykbtJmg4A).
+_idyll_ is a fractal engine, designed for the purpose of rendering beautiful, stunning and completely unique images of iterative fractals. if that sounds complicated, [**_here's a nice video demo_**](https://youtu.be/cFykbtJmg4A), and [**_here's a nice gallery_**](https://imgur.com/gallery/dUqdLRD).
 
 ## features
 * path-tracing used to compute global illumination
